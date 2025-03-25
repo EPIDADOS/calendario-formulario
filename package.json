@@ -1,0 +1,61 @@
+{
+  "name": "ww-weekly-schedule",
+  "version": "1.0.0",
+  "description": "An interactive weekly schedule component for WeWeb that allows users to plan their week with different activity types while enforcing a maximum study hours limit.",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "weweb",
+    "component",
+    "schedule",
+    "timetable",
+    "weekly",
+    "planner",
+    "study",
+    "hours",
+    "calendar",
+    "time-management"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ww-weekly-schedule.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "ww-weekly-schedule.umd.js",
+  "scripts": {
+    "build": "vue-cli-service build --target lib --name ww-weekly-schedule ./src/wwElement.vue",
+    "serve": "vue-cli-service serve",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "vue": "^2.6.14"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/cli-plugin-eslint": "^5.0.8",
+    "@vue/cli-service": "^5.0.8",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "sass": "^1.43.4",
+    "sass-loader": "^10.2.0",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "weweb": {
+    "componentType": "wwObject",
+    "name": "Weekly Schedule",
+    "category": "interaction",
+    "keepSvgAttributes": false,
+    "wewebVersion": ">=1.9.0"
+  }
+}
