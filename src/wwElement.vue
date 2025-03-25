@@ -271,7 +271,7 @@ export default {
     filledHours() {
       const counts = {};
       
-      // Initialize counts
+      // Initialize counts for all types, mesmo que não tenham horas
       this.scheduleTypes.forEach(type => {
         counts[type.value] = 0;
       });
@@ -307,31 +307,9 @@ export default {
       return Math.min(percentage, 100); // Cap at 100%
     },
     
-    // List of filled cells for use in actions/getters
+    // Versão para uso interno do componente (substituída por getFilledCellsArray no evento)
     filledCells() {
-      const cells = [];
-      
-      Object.entries(this.scheduleData).forEach(([day, hours]) => {
-        if (hours) {
-          Object.entries(hours).forEach(([hour, type]) => {
-            if (type) {
-              const dayObj = this.days.find(d => d.value === day);
-              const hourInt = parseInt(hour);
-              
-              cells.push({
-                day,
-                dayLabel: dayObj ? dayObj.label : day,
-                hour: hourInt,
-                hourLabel: `${String(hourInt).padStart(2, '0')}:00`,
-                type,
-                typeLabel: this.getCellTypeLabel(type)
-              });
-            }
-          });
-        }
-      });
-      
-      return cells;
+      return this.getFilledCellsArray();
     },
     
     // Get current day based on view mode
@@ -789,17 +767,27 @@ export default {
     
     // Método para emitir alterações no estilo WeWeb
     emitChange() {
-      // Evento trigger-event para WeWeb
+      // Prepara os dados de forma mais explícita para garantir que estejam corretos
+      const eventData = {
+        // Dados estruturados da agenda (formato objeto)
+        data: JSON.parse(JSON.stringify(this.scheduleData)),
+        
+        // Array com todas as células preenchidas
+        filledCells: this.getFilledCellsArray(),
+        
+        // Contagem de horas por tipo
+        filledHours: this.filledHours,
+        
+        // Valores de progresso
+        studyHours: this.studyHours,
+        weeklyHoursGoal: this.weeklyHoursGoal,
+        weeklyProgressPercentage: this.weeklyProgressPercentage,
+      };
+      
+      // Emite o evento com os dados
       this.$emit('trigger-event', {
         name: 'scheduleChanged',
-        event: {
-          data: JSON.parse(JSON.stringify(this.scheduleData)),
-          filledCells: this.filledCells,
-          filledHours: this.filledHours,
-          studyHours: this.studyHours,
-          weeklyHoursGoal: this.weeklyHoursGoal,
-          weeklyProgressPercentage: this.weeklyProgressPercentage,
-        }
+        event: eventData
       });
       
       /* wwEditor:start */
@@ -807,9 +795,41 @@ export default {
       // para o WeWeb atualizar o content
       this.$emit('update:content', {
         ...this.content,
-        weeklyHoursGoal: this.weeklyHoursGoal
+        weeklyHoursGoal: this.weeklyHoursGoal,
+        // Salva também os dados da agenda para persistência
+        initialData: JSON.stringify(this.scheduleData)
       });
       /* wwEditor:end */
+    },
+    
+    // Método dedicado para garantir o formato correto do array de células
+    getFilledCellsArray() {
+      const cells = [];
+      
+      // Percorre todos os dias preenchidos
+      Object.entries(this.scheduleData).forEach(([day, hours]) => {
+        if (hours && Object.keys(hours).length > 0) {
+          // Percorre todas as horas preenchidas deste dia
+          Object.entries(hours).forEach(([hour, type]) => {
+            if (type) {
+              const dayObj = this.days.find(d => d.value === day);
+              const hourInt = parseInt(hour);
+              
+              // Cria um objeto explícito para cada célula preenchida
+              cells.push({
+                day,
+                dayLabel: dayObj ? dayObj.label : day,
+                hour: hourInt,
+                hourLabel: `${String(hourInt).padStart(2, '0')}:00`,
+                type,
+                typeLabel: this.getCellTypeLabel(type)
+              });
+            }
+          });
+        }
+      });
+      
+      return cells;
     },
     
     // Warning methods
@@ -1024,9 +1044,10 @@ export default {
     
     // External action methods - Métodos para ações externas no WeWeb
     getScheduleData() {
+      // Utiliza o mesmo formato de dados do evento para consistência
       return {
         data: JSON.parse(JSON.stringify(this.scheduleData)),
-        filledCells: this.filledCells,
+        filledCells: this.getFilledCellsArray(),
         filledHours: this.filledHours,
         studyHours: this.studyHours,
         weeklyHoursGoal: this.weeklyHoursGoal,

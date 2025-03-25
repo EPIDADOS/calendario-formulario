@@ -652,12 +652,48 @@ export default {
       name: 'scheduleChanged',
       label: { en: 'On Schedule Changed', pt: 'Ao Alterar a Agenda' },
       event: {
-        data: { type: 'Object' },
-        filledCells: { type: 'Array' },
-        filledHours: { type: 'Object' },
-        studyHours: { type: 'Number' },
-        weeklyHoursGoal: { type: 'Number' },
-        weeklyProgressPercentage: { type: 'Number' },
+        data: {
+          type: 'Object',
+          description: {
+            en: 'Full schedule data structure',
+            pt: 'Estrutura completa de dados da agenda',
+          },
+        },
+        filledCells: {
+          type: 'Array',
+          description: {
+            en: 'Array with all filled cells (day-hour-type)',
+            pt: 'Array com todas as células preenchidas (dia-hora-tipo)',
+          },
+        },
+        filledHours: {
+          type: 'Object',
+          description: {
+            en: 'Count of hours by activity type',
+            pt: 'Contagem de horas por tipo de atividade',
+          },
+        },
+        studyHours: {
+          type: 'Number',
+          description: {
+            en: 'Total study hours',
+            pt: 'Total de horas de estudo',
+          },
+        },
+        weeklyHoursGoal: {
+          type: 'Number',
+          description: {
+            en: 'Weekly hours goal',
+            pt: 'Meta de horas semanais',
+          },
+        },
+        weeklyProgressPercentage: {
+          type: 'Number',
+          description: {
+            en: 'Percentage of weekly goal completion',
+            pt: 'Porcentagem de conclusão da meta semanal',
+          },
+        },
       },
     },
   ],
