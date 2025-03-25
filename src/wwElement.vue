@@ -198,6 +198,15 @@
         <span class="status-hours" :style="statusHoursStyle">{{ count }}h</span>
       </div>
     </div>
+    
+    <!-- Botão invisível para disparar evento inicial (ajuda na detecção de eventos) -->
+    <button 
+      v-if="false" 
+      @click="$emit('trigger-event', { name: 'onScheduleChanged', event: getEventData() })"
+      style="display: none;"
+    >
+      Test Event
+    </button>
   </div>
 </template>
 
@@ -209,7 +218,6 @@ export default {
       type: Object, 
       required: true 
     },
-    // Removemos o UID que não é padrão no WeWeb
     
     /* wwEditor:start */
     // Propriedades disponíveis apenas no modo de edição do WeWeb
@@ -307,7 +315,7 @@ export default {
       return Math.min(percentage, 100); // Cap at 100%
     },
     
-    // Versão para uso interno do componente (substituída por getFilledCellsArray no evento)
+    // Versão para uso interno do componente
     filledCells() {
       return this.getFilledCellsArray();
     },
@@ -731,6 +739,11 @@ export default {
       this.$refs.daySelector.addEventListener('touchmove', this.handleTouchMove, { passive: false });
       this.$refs.daySelector.addEventListener('touchend', this.handleTouchEnd);
     }
+    
+    // Emissão inicial para "registrar" o evento no WeWeb
+    this.$nextTick(() => {
+      this.emitChange();
+    });
   },
   
   beforeUnmount() {
@@ -750,25 +763,9 @@ export default {
   },
   
   methods: {
-    // Utility methods
-    initializeEmptySchedule() {
-      const data = {};
-      
-      this.days.forEach(day => {
-        data[day.value] = {};
-      });
-      
-      this.scheduleData = data;
-    },
-    
-    checkMobileView() {
-      this.isMobileView = window.innerWidth < (this.content.mobileBreakpoint || 768);
-    },
-    
-    // Método para emitir alterações no estilo WeWeb
-    emitChange() {
-      // Prepara os dados de forma mais explícita para garantir que estejam corretos
-      const eventData = {
+    // Prepara os dados do evento para uso consistente
+    getEventData() {
+      return {
         // Dados estruturados da agenda (formato objeto)
         data: JSON.parse(JSON.stringify(this.scheduleData)),
         
@@ -783,10 +780,16 @@ export default {
         weeklyHoursGoal: this.weeklyHoursGoal,
         weeklyProgressPercentage: this.weeklyProgressPercentage,
       };
+    },
+  
+    // Método para emitir alterações no estilo WeWeb
+    emitChange() {
+      // Prepara os dados usando o método consistente
+      const eventData = this.getEventData();
       
-      // Emite o evento com os dados
+      // IMPORTANTE: Nome do evento com prefixo "on" para conformidade com WeWeb
       this.$emit('trigger-event', {
-        name: 'scheduleChanged',
+        name: 'onScheduleChanged',
         event: eventData
       });
       
@@ -800,6 +803,9 @@ export default {
         initialData: JSON.stringify(this.scheduleData)
       });
       /* wwEditor:end */
+      
+      // Adiciona log para depuração (pode ser removido em produção)
+      console.log('Evento onScheduleChanged emitido com dados:', eventData);
     },
     
     // Método dedicado para garantir o formato correto do array de células
@@ -830,6 +836,21 @@ export default {
       });
       
       return cells;
+    },
+    
+    // Utility methods
+    initializeEmptySchedule() {
+      const data = {};
+      
+      this.days.forEach(day => {
+        data[day.value] = {};
+      });
+      
+      this.scheduleData = data;
+    },
+    
+    checkMobileView() {
+      this.isMobileView = window.innerWidth < (this.content.mobileBreakpoint || 768);
     },
     
     // Warning methods
@@ -903,6 +924,9 @@ export default {
           }
         };
       }
+      
+      // Emit change event explicitamente (além do watch)
+      this.emitChange();
     },
     
     // Progress indicator methods
@@ -913,6 +937,9 @@ export default {
     adjustHoursGoal(amount) {
       const newGoal = Math.max(0, Math.min(168, this.weeklyHoursGoal + amount));
       this.weeklyHoursGoal = newGoal;
+      
+      // Emit change event explicitamente (além do watch)
+      this.emitChange();
     },
     
     // Touch interaction methods for mobile
@@ -1045,18 +1072,12 @@ export default {
     // External action methods - Métodos para ações externas no WeWeb
     getScheduleData() {
       // Utiliza o mesmo formato de dados do evento para consistência
-      return {
-        data: JSON.parse(JSON.stringify(this.scheduleData)),
-        filledCells: this.getFilledCellsArray(),
-        filledHours: this.filledHours,
-        studyHours: this.studyHours,
-        weeklyHoursGoal: this.weeklyHoursGoal,
-        weeklyProgressPercentage: this.weeklyProgressPercentage,
-      };
+      return this.getEventData();
     },
     
     clearSchedule() {
       this.initializeEmptySchedule();
+      this.emitChange();
     },
     
     setCellValue(day, hour, type) {
@@ -1090,22 +1111,37 @@ export default {
           }
         };
       }
+      
+      // Emit change event explicitamente (além do watch)
+      this.emitChange();
     },
     
     setWeeklyHoursGoal(goal) {
       this.weeklyHoursGoal = parseInt(goal) || 0;
+      this.emitChange();
     },
     
     setSelectedType(type) {
       const typeExists = this.scheduleTypes.some(t => t.value === type);
       if (typeExists) {
         this.selectedType = type;
+        // Não precisamos emitir mudança aqui pois não afeta os dados
       }
     },
     
     importSchedule(data) {
       if (data && typeof data === 'object') {
-        this.scheduleData = JSON.parse(JSON.stringify(data));
+        try {
+          // Se for uma string JSON, tentar parsear
+          const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+          // Deep clone para evitar referências
+          this.scheduleData = JSON.parse(JSON.stringify(parsedData));
+          
+          // Emit change event explicitamente
+          this.emitChange();
+        } catch (e) {
+          console.error("Error importing schedule data:", e);
+        }
       }
     },
   },

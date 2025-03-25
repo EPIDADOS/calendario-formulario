@@ -649,8 +649,15 @@ export default {
   },
   interactions: [
     {
-      name: 'scheduleChanged',
-      label: { en: 'On Schedule Changed', pt: 'Ao Alterar a Agenda' },
+      name: 'onScheduleChanged', // IMPORTANTE: Nome com prefixo 'on' para conformidade com WeWeb
+      label: {
+        en: 'On Schedule Changed',
+        pt: 'Ao Alterar a Agenda',
+      },
+      description: {
+        en: 'Triggered when any change is made to the schedule',
+        pt: 'Acionado quando qualquer alteração é feita na agenda',
+      },
       event: {
         data: {
           type: 'Object',
@@ -692,6 +699,23 @@ export default {
           description: {
             en: 'Percentage of weekly goal completion',
             pt: 'Porcentagem de conclusão da meta semanal',
+          },
+        },
+      },
+    },
+    // Evento de teste para ajudar na verificação
+    {
+      name: 'onTestEvent',
+      label: {
+        en: 'Test Event',
+        pt: 'Evento de Teste',
+      },
+      event: {
+        message: {
+          type: 'String',
+          description: {
+            en: 'Test message',
+            pt: 'Mensagem de teste',
           },
         },
       },
