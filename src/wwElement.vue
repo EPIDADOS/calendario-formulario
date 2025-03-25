@@ -204,19 +204,19 @@
 <script>
 export default {
   props: {
+    // Propriedades padrão do WeWeb
     content: { 
       type: Object, 
       required: true 
     },
-    uid: { 
-      type: String, 
-      required: true 
-    },
+    // Removemos o UID que não é padrão no WeWeb
+    
     /* wwEditor:start */
-    wwEditorState: { type: Object, required: true },
+    // Propriedades disponíveis apenas no modo de edição do WeWeb
+    wwEditorState: { type: Object, required: false },
     /* wwEditor:end */
   },
-  emits: ['trigger-event'],
+  emits: ['update:content', 'trigger-event'], // Adicionado update:content para WeWeb
   data() {
     return {
       // Schedule state
@@ -675,8 +675,15 @@ export default {
       immediate: true,
       handler(newData) {
         if (newData && typeof newData === 'object') {
-          // Deep clone to avoid references
-          this.scheduleData = JSON.parse(JSON.stringify(newData));
+          try {
+            // Se for uma string JSON, tentar parsear
+            const parsedData = typeof newData === 'string' ? JSON.parse(newData) : newData;
+            // Deep clone para evitar referências
+            this.scheduleData = JSON.parse(JSON.stringify(parsedData));
+          } catch (e) {
+            console.error("Error parsing initialData:", e);
+            this.scheduleData = {};
+          }
         }
       }
     },
@@ -780,7 +787,9 @@ export default {
       this.isMobileView = window.innerWidth < (this.content.mobileBreakpoint || 768);
     },
     
+    // Método para emitir alterações no estilo WeWeb
     emitChange() {
+      // Evento trigger-event para WeWeb
       this.$emit('trigger-event', {
         name: 'scheduleChanged',
         event: {
@@ -792,6 +801,15 @@ export default {
           weeklyProgressPercentage: this.weeklyProgressPercentage,
         }
       });
+      
+      /* wwEditor:start */
+      // Atualizar o conteúdo no modo editor, emitindo o evento update:content
+      // para o WeWeb atualizar o content
+      this.$emit('update:content', {
+        ...this.content,
+        weeklyHoursGoal: this.weeklyHoursGoal
+      });
+      /* wwEditor:end */
     },
     
     // Warning methods
@@ -1004,7 +1022,7 @@ export default {
       };
     },
     
-    // External action methods
+    // External action methods - Métodos para ações externas no WeWeb
     getScheduleData() {
       return {
         data: JSON.parse(JSON.stringify(this.scheduleData)),
