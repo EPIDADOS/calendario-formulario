@@ -28,9 +28,8 @@
   },
   "main": "ww-weekly-schedule.umd.js",
   "scripts": {
-    "build": "vue-cli-service build --target lib --name ww-weekly-schedule ./src/wwElement.vue",
-    "serve": "vue-cli-service serve",
-    "lint": "vue-cli-service lint"
+    "build": "weweb build",
+    "serve": "weweb serve"
   },
   "dependencies": {
     "vue": "^2.6.14"
