@@ -5,6 +5,7 @@ export default {
       pt: 'Agenda Semanal',
     },
     icon: 'mdi-calendar-week',
+    type: 'element', // Explicitamente definindo como elemento
   },
   properties: {
     // Conteúdo básico
@@ -597,7 +598,8 @@ export default {
     },
   },
   classes: {
-    sections: ['weekly-schedule'],
+    // Mudança de "sections" para "elements" já que este é um elemento, não uma seção
+    elements: ['weekly-schedule'],
     panels: [
       {
         label: { en: 'General', pt: 'Geral' },
@@ -647,80 +649,9 @@ export default {
       },
     ],
   },
-  interactions: [
-    {
-      name: 'onScheduleChanged', // IMPORTANTE: Nome com prefixo 'on' para conformidade com WeWeb
-      label: {
-        en: 'On Schedule Changed',
-        pt: 'Ao Alterar a Agenda',
-      },
-      description: {
-        en: 'Triggered when any change is made to the schedule',
-        pt: 'Acionado quando qualquer alteração é feita na agenda',
-      },
-      event: {
-        data: {
-          type: 'Object',
-          description: {
-            en: 'Full schedule data structure',
-            pt: 'Estrutura completa de dados da agenda',
-          },
-        },
-        filledCells: {
-          type: 'Array',
-          description: {
-            en: 'Array with all filled cells (day-hour-type)',
-            pt: 'Array com todas as células preenchidas (dia-hora-tipo)',
-          },
-        },
-        filledHours: {
-          type: 'Object',
-          description: {
-            en: 'Count of hours by activity type',
-            pt: 'Contagem de horas por tipo de atividade',
-          },
-        },
-        studyHours: {
-          type: 'Number',
-          description: {
-            en: 'Total study hours',
-            pt: 'Total de horas de estudo',
-          },
-        },
-        weeklyHoursGoal: {
-          type: 'Number',
-          description: {
-            en: 'Weekly hours goal',
-            pt: 'Meta de horas semanais',
-          },
-        },
-        weeklyProgressPercentage: {
-          type: 'Number',
-          description: {
-            en: 'Percentage of weekly goal completion',
-            pt: 'Porcentagem de conclusão da meta semanal',
-          },
-        },
-      },
-    },
-    // Evento de teste para ajudar na verificação
-    {
-      name: 'onTestEvent',
-      label: {
-        en: 'Test Event',
-        pt: 'Evento de Teste',
-      },
-      event: {
-        message: {
-          type: 'String',
-          description: {
-            en: 'Test message',
-            pt: 'Mensagem de teste',
-          },
-        },
-      },
-    },
-  ],
+  // MUDANÇA IMPORTANTE: Removida a seção "interactions" para evitar conflitos
+  // Os eventos agora são declarados diretamente no componente Vue
+
   actions: [
     {
       name: 'clearSchedule',

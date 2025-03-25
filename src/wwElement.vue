@@ -199,12 +199,11 @@
       </div>
     </div>
     
-    <!-- Botão invisível para disparar evento inicial (ajuda na detecção de eventos) -->
+    <!-- Botão de teste (invisível em produção) -->
     <button 
       v-if="false" 
-      @click="$emit('trigger-event', { name: 'onScheduleChanged', event: getEventData() })"
-      style="display: none;"
-    >
+      @click="emitTestEvent()"
+      style="display: none;">
       Test Event
     </button>
   </div>
@@ -212,11 +211,70 @@
 
 <script>
 export default {
+  // SOLUÇÃO PARA EVENTOS DO WEWEB - Registro nativo de eventos
+  /* wwEditor:start */
+  // Use apenas um formato dos três abaixo (descomentar o que funcionar melhor)
+  
+  // Formato 1: Usando wewebEvents (formato mais recente)
+  wewebEvents: {
+    "scheduleChanged": {
+      label: {
+        en: "On Schedule Changed",
+        pt: "Ao Alterar a Agenda" 
+      },
+      description: {
+        en: "Triggered when the schedule is modified",
+        pt: "Acionado quando a agenda é modificada"
+      },
+      event: {
+        filledCells: { type: "Array" },
+        studyHours: { type: "Number" },
+        weeklyHoursGoal: { type: "Number" },
+        weeklyProgressPercentage: { type: "Number" }
+      }
+    },
+    "testEvent": {
+      label: {
+        en: "Test Event",
+        pt: "Evento de Teste"
+      },
+      event: {
+        message: { type: "String" }
+      }
+    }
+  },
+  
+  // Formato 2: Usando events (formato clássico)
+  /*
+  events: {
+    scheduleChanged: {
+      label: {
+        en: 'When Schedule Changes',
+        pt: 'Quando a Agenda Muda'
+      },
+      event: {
+        filledCells: { type: 'Array' },
+        studyHours: { type: 'Number' }
+      }
+    }
+  },
+  */
+  
+  // Formato 3: Usando wwEvents (formato alternativo)
+  /*
+  wwEvents: ['scheduleChanged'],
+  */
+  /* wwEditor:end */
+  
   props: {
     // Propriedades padrão do WeWeb
     content: { 
       type: Object, 
       required: true 
+    },
+    uid: {
+      type: String,
+      required: false
     },
     
     /* wwEditor:start */
@@ -224,7 +282,8 @@ export default {
     wwEditorState: { type: Object, required: false },
     /* wwEditor:end */
   },
-  emits: ['update:content', 'trigger-event'], // Adicionado update:content para WeWeb
+  emits: ['update:content', 'scheduleChanged', 'testEvent'], // Lista explícita de eventos emitidos
+
   data() {
     return {
       // Schedule state
@@ -660,7 +719,7 @@ export default {
     'content.initialData': {
       immediate: true,
       handler(newData) {
-        if (newData && typeof newData === 'object') {
+        if (newData) {
           try {
             // Se for uma string JSON, tentar parsear
             const parsedData = typeof newData === 'string' ? JSON.parse(newData) : newData;
@@ -740,9 +799,29 @@ export default {
       this.$refs.daySelector.addEventListener('touchend', this.handleTouchEnd);
     }
     
-    // Emissão inicial para "registrar" o evento no WeWeb
+    // SOLUÇÃO PARA EVENTOS - Inicialização WeWeb
+    /* wwEditor:start */
+    // Registrar o componente e seus eventos no WeWeb
+    if (window.wwLib && window.wwLib.wwUtils) {
+      try {
+        console.log("[WeeklySchedule] Registrando componente no WeWeb");
+        window.wwLib.wwUtils.triggerEvent('component-mounted', {
+          componentId: this.uid || 'weekly-schedule',
+          componentType: 'element',
+          hasEvents: true,
+          eventNames: ['scheduleChanged', 'testEvent']
+        });
+      } catch (e) {
+        console.error("[WeeklySchedule] Erro ao registrar componente:", e);
+      }
+    }
+    /* wwEditor:end */
+    
+    // Emissão inicial para "registrar" o evento
     this.$nextTick(() => {
+      // Emite eventos em diferentes formatos para garantir que um deles funcione
       this.emitChange();
+      this.emitTestEvent();
     });
   },
   
@@ -763,6 +842,24 @@ export default {
   },
   
   methods: {
+    // SOLUÇÃO PARA EVENTOS - Múltiplos formatos de emissão para maior compatibilidade
+    
+    // Método de teste - emite um evento simples para testes
+    emitTestEvent() {
+      const testMessage = { message: "Teste de evento com sucesso!" };
+      
+      console.log("[WeeklySchedule] Emitindo evento de teste");
+      
+      // Formato 1: Emissão direta (mais simples)
+      this.$emit('testEvent', testMessage);
+      
+      // Formato 2: Formato WeWeb clássico
+      this.$emit('trigger-event', {
+        name: 'testEvent',
+        event: testMessage
+      });
+    },
+    
     // Prepara os dados do evento para uso consistente
     getEventData() {
       return {
@@ -782,20 +879,31 @@ export default {
       };
     },
   
-    // Método para emitir alterações no estilo WeWeb
+    // Método para emitir alterações no estilo WeWeb - MÚLTIPLOS FORMATOS
     emitChange() {
       // Prepara os dados usando o método consistente
       const eventData = this.getEventData();
       
-      // IMPORTANTE: Nome do evento com prefixo "on" para conformidade com WeWeb
+      console.log("[WeeklySchedule] Emitindo evento de alteração na agenda");
+      
+      // FORMATO 1: Emissão direta do evento - formato padrão Vue
+      this.$emit('scheduleChanged', eventData);
+      
+      // FORMATO 2: Formato WeWeb com trigger-event
+      this.$emit('trigger-event', {
+        name: 'scheduleChanged',
+        event: eventData
+      });
+      
+      // FORMATO 3: Teste com prefixo on (alternativa)
+      this.$emit('onScheduleChanged', eventData);
       this.$emit('trigger-event', {
         name: 'onScheduleChanged',
         event: eventData
       });
       
       /* wwEditor:start */
-      // Atualizar o conteúdo no modo editor, emitindo o evento update:content
-      // para o WeWeb atualizar o content
+      // Atualizar o conteúdo no modo editor
       this.$emit('update:content', {
         ...this.content,
         weeklyHoursGoal: this.weeklyHoursGoal,
@@ -803,9 +911,6 @@ export default {
         initialData: JSON.stringify(this.scheduleData)
       });
       /* wwEditor:end */
-      
-      // Adiciona log para depuração (pode ser removido em produção)
-      console.log('Evento onScheduleChanged emitido com dados:', eventData);
     },
     
     // Método dedicado para garantir o formato correto do array de células
