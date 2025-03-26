@@ -18,29 +18,8 @@
       </div>
     </div>
 
-    <!-- Header with controls -->
+    <!-- Header with hours goal -->
     <div class="schedule-header" :style="headerStyle">
-      <div class="scheduler-title" v-if="content.showTitle">
-        <h3 :style="titleStyle">{{ content.title || '' }}</h3>
-      </div>
-      
-      <!-- Activity type controls -->
-      <div class="activity-types" :style="activityTypesStyle">
-        <button 
-          v-for="type in scheduleTypes" 
-          :key="type.value"
-          class="activity-button"
-          :class="{ active: selectedType === type.value }"
-          :style="getTypeButtonStyle(type)"
-          @click="selectedType = type.value"
-          :aria-label="`Select ${type.label} activity type`"
-          :aria-pressed="selectedType === type.value"
-        >
-          <span class="activity-color" :style="{ backgroundColor: type.color }"></span>
-          <span>{{ type.label }}</span>
-        </button>
-      </div>
-      
       <!-- Hours goal with visual indicator -->
       <div class="hours-goal" :style="hoursGoalStyle">
         <span>{{ content.hoursGoalLabel || 'Meta de horas de estudo:' }}</span>
@@ -95,14 +74,14 @@
             class="schedule-cell"
             :class="{
               'filled': getCellValue(day.value, hour.value),
-              [`type-${getCellValue(day.value, hour.value)}`]: getCellValue(day.value, hour.value),
-              'disabled': isStudyDisabled && selectedType === 'study' && !getCellValue(day.value, hour.value)
+              'study': getCellValue(day.value, hour.value) === 'study',
+              'disabled': isStudyDisabled && !getCellValue(day.value, hour.value)
             }"
             :style="getCellStyle(day.value, hour.value)"
             @click="toggleCell(day.value, hour.value)"
             :data-day="day.value"
             :data-hour="hour.value"
-            :aria-label="`${day.label} at ${hour.label}, ${getCellValue(day.value, hour.value) ? getCellTypeLabel(getCellValue(day.value, hour.value)) : 'Empty'}`"
+            :aria-label="`${day.label} at ${hour.label}, ${getCellValue(day.value, hour.value) ? 'Estudo' : 'Vazio'}`"
             :aria-checked="!!getCellValue(day.value, hour.value)"
             role="checkbox"
             tabindex="0"
@@ -110,7 +89,7 @@
             @keydown.space.prevent="toggleCell(day.value, hour.value)"
           >
             <span v-if="getCellValue(day.value, hour.value)" :style="getCellTextStyle(day.value, hour.value)">
-              {{ getCellTypeLabel(getCellValue(day.value, hour.value)) }}
+              {{ content.studyLabel || 'Estudo' }}
             </span>
           </div>
         </template>
@@ -155,14 +134,14 @@
             class="mobile-cell"
             :class="{
               'filled': getCellValue(selectedMobileDay, hour.value),
-              [`type-${getCellValue(selectedMobileDay, hour.value)}`]: getCellValue(selectedMobileDay, hour.value),
-              'disabled': isStudyDisabled && selectedType === 'study' && !getCellValue(selectedMobileDay, hour.value)
+              'study': getCellValue(selectedMobileDay, hour.value) === 'study',
+              'disabled': isStudyDisabled && !getCellValue(selectedMobileDay, hour.value)
             }"
             :style="getMobileCellStyle(selectedMobileDay, hour.value)"
             @click="toggleCell(selectedMobileDay, hour.value)"
             :data-day="selectedMobileDay"
             :data-hour="hour.value"
-            :aria-label="`${hour.label}, ${getCellValue(selectedMobileDay, hour.value) ? getCellTypeLabel(getCellValue(selectedMobileDay, hour.value)) : 'Empty'}`"
+            :aria-label="`${hour.label}, ${getCellValue(selectedMobileDay, hour.value) ? 'Estudo' : 'Vazio'}`"
             :aria-checked="!!getCellValue(selectedMobileDay, hour.value)"
             role="checkbox"
             tabindex="0"
@@ -170,32 +149,19 @@
             @keydown.space.prevent="toggleCell(selectedMobileDay, hour.value)"
           >
             <span v-if="getCellValue(selectedMobileDay, hour.value)" :style="getCellTextStyle(selectedMobileDay, hour.value)">
-              {{ getCellTypeLabel(getCellValue(selectedMobileDay, hour.value)) }}
+              {{ content.studyLabel || 'Estudo' }}
             </span>
           </div>
         </div>
       </div>
     </div>
     
-    <!-- Legend with improved visuals -->
-    <div class="schedule-legend" :style="legendStyle" v-if="content.showLegend">
-      <div 
-        v-for="type in scheduleTypes" 
-        :key="`legend-${type.value}`" 
-        class="legend-item"
-        :style="legendItemStyle"
-      >
-        <span class="legend-color" :style="{ backgroundColor: type.color, ...legendColorStyle }"></span>
-        <span class="legend-text" :style="legendTextStyle">{{ type.legend || type.label }}</span>
-      </div>
-    </div>
-    
     <!-- Hours status with improved visuals -->
     <div class="hours-status" :style="hoursStatusStyle" v-if="content.showHoursStatus">
-      <div v-for="(count, type) in filledHours" :key="`status-${type}`" class="type-status" :style="typeStatusStyle">
-        <span class="status-color" :style="{ backgroundColor: getTypeColor(type), ...statusColorStyle }"></span>
-        <span class="status-label" :style="statusLabelStyle">{{ getTypeLabel(type) }}:</span>
-        <span class="status-hours" :style="statusHoursStyle">{{ count }}h</span>
+      <div class="type-status" :style="typeStatusStyle">
+        <span class="status-color" :style="{ backgroundColor: content.studyColor || '#4CAF50', ...statusColorStyle }"></span>
+        <span class="status-label" :style="statusLabelStyle">{{ content.studyLabel || 'Estudo' }}:</span>
+        <span class="status-hours" :style="statusHoursStyle">{{ studyHours }}h</span>
       </div>
     </div>
   </div>
@@ -224,7 +190,6 @@ export default {
     return {
       // Schedule state
       scheduleData: {},
-      selectedType: 'study',
       weeklyHoursGoal: 20,
       selectedMobileDay: 'monday',
       isMobileView: false,
@@ -244,14 +209,6 @@ export default {
         { value: 'thursday', label: 'Quinta', shortLabel: 'Qui' },
         { value: 'friday', label: 'Sexta', shortLabel: 'Sex' },
         { value: 'saturday', label: 'Sábado', shortLabel: 'Sáb' },
-      ],
-      
-      // Schedule types
-      scheduleTypes: [
-        { value: 'study', label: 'Estudo', color: '#4CAF50', textColor: '#FFFFFF', legend: 'Disponível para estudo' },
-        { value: 'class', label: 'Aula', color: '#F44336', textColor: '#FFFFFF', legend: 'Compromisso (aula, estágio, etc.)' },
-        { value: 'leisure', label: 'Lazer', color: '#2196F3', textColor: '#FFFFFF', legend: 'Lazer/Descanso' },
-        { value: 'work', label: 'Trabalho', color: '#FF9800', textColor: '#FFFFFF', legend: 'Trabalho' },
       ]
     };
   },
@@ -270,32 +227,22 @@ export default {
       });
     },
     
-    // Hours count by type
-    filledHours() {
-      const counts = {};
+    // Study hours count
+    studyHours() {
+      let count = 0;
       
-      // Initialize counts for all types, mesmo que não tenham horas
-      this.scheduleTypes.forEach(type => {
-        counts[type.value] = 0;
-      });
-      
-      // Count filled hours
+      // Count filled study hours
       Object.values(this.scheduleData).forEach(dayData => {
         if (dayData) {
-          Object.entries(dayData).forEach(([_, cellType]) => {
-            if (cellType && counts[cellType] !== undefined) {
-              counts[cellType]++;
+          Object.values(dayData).forEach(cellType => {
+            if (cellType === 'study') {
+              count++;
             }
           });
         }
       });
       
-      return counts;
-    },
-    
-    // Study hours - only count study type
-    studyHours() {
-      return this.filledHours.study || 0;
+      return count;
     },
     
     // Check if study hours are at or above goal
@@ -303,7 +250,7 @@ export default {
       return this.studyHours >= this.weeklyHoursGoal;
     },
     
-    // Weekly goal progress percentage (based only on study hours)
+    // Weekly goal progress percentage
     weeklyProgressPercentage() {
       if (this.weeklyHoursGoal <= 0) return 100;
       const percentage = (this.studyHours / this.weeklyHoursGoal) * 100;
@@ -401,20 +348,11 @@ export default {
         padding: '16px 20px',
         display: 'flex',
         flexDirection: this.isMobileView ? 'column' : 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         alignItems: this.isMobileView ? 'stretch' : 'center',
         gap: '16px',
         borderBottom: `1px solid ${this.content.dividerColor || '#eaeaea'}`,
         backgroundColor: this.content.headerBgColor || '#FFFFFF',
-      };
-    },
-    
-    activityTypesStyle() {
-      return {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '10px',
-        flex: '1',
       };
     },
     
@@ -466,15 +404,6 @@ export default {
         borderRight: `1px solid ${this.content.inputBorderColor || '#ddd'}`,
         outline: 'none',
         fontSize: '14px',
-      };
-    },
-    
-    titleStyle() {
-      return {
-        margin: '0',
-        fontSize: this.content.titleSize || '1.4rem',
-        fontWeight: '600',
-        color: this.content.titleColor || '#333',
       };
     },
     
@@ -568,41 +497,6 @@ export default {
       };
     },
     
-    legendStyle() {
-      return {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '20px',
-        padding: '20px',
-        backgroundColor: this.content.legendBgColor || '#f8f9fa',
-        borderTop: `1px solid ${this.content.dividerColor || '#eaeaea'}`,
-      };
-    },
-    
-    legendItemStyle() {
-      return {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-      };
-    },
-    
-    legendColorStyle() {
-      return {
-        width: '16px',
-        height: '16px',
-        borderRadius: this.content.legendColorRadius || '4px',
-        display: 'inline-block',
-      };
-    },
-    
-    legendTextStyle() {
-      return {
-        fontSize: '0.9rem',
-        color: this.content.legendTextColor || '#666',
-      };
-    },
-    
     hoursStatusStyle() {
       return {
         display: 'flex',
@@ -673,19 +567,6 @@ export default {
       handler(newGoal) {
         if (newGoal !== undefined) {
           this.weeklyHoursGoal = parseInt(newGoal) || 0;
-        }
-      }
-    },
-    'content.scheduleTypes': {
-      immediate: true,
-      handler(newTypes) {
-        if (Array.isArray(newTypes) && newTypes.length > 0) {
-          this.scheduleTypes = JSON.parse(JSON.stringify(newTypes));
-          
-          // Ensure selectedType is valid
-          if (!this.scheduleTypes.some(type => type.value === this.selectedType)) {
-            this.selectedType = this.scheduleTypes[0].value;
-          }
         }
       }
     },
@@ -788,8 +669,7 @@ export default {
       return result;
     },
     
-    // CORREÇÃO CRÍTICA #1: Método para gerar array de células preenchidas
-    // Esse método agora retorna um array simples garantido
+    // Método para gerar array de células preenchidas
     getFilledCellsArray() {
       // Iniciando com um array vazio
       const cells = [];
@@ -799,7 +679,7 @@ export default {
         if (hours && Object.keys(hours).length > 0) {
           // Percorre todas as horas preenchidas deste dia
           Object.entries(hours).forEach(([hour, type]) => {
-            if (type) {
+            if (type === 'study') {
               const dayObj = this.days.find(d => d.value === day) || { label: day };
               const hourInt = parseInt(hour);
               
@@ -809,8 +689,8 @@ export default {
                 dayLabel: dayObj.label,
                 hour: hourInt,
                 hourLabel: `${String(hourInt).padStart(2, '0')}:00`,
-                type,
-                typeLabel: this.getCellTypeLabel(type)
+                type: 'study',
+                typeLabel: this.content.studyLabel || 'Estudo'
               });
             }
           });
@@ -824,7 +704,7 @@ export default {
       return cells || [];
     },
     
-    // CORREÇÃO CRÍTICA #2: Prepara dados do evento em formato compatível com WeWeb
+    // Prepara dados do evento em formato compatível com WeWeb
     getEventData() {
       // Gera o array de células garantido como array antes de usá-lo
       const filledCells = this.getFilledCellsArray();
@@ -843,7 +723,7 @@ export default {
       };
     },
   
-    // CORREÇÃO CRÍTICA #3: Emissão de eventos compatível com WeWeb
+    // Emissão de eventos compatível com WeWeb
     emitChange() {
       // Prepara os dados usando o método atualizado
       const eventData = this.getEventData();
@@ -925,21 +805,6 @@ export default {
       return this.scheduleData[day] ? this.scheduleData[day][hour] || null : null;
     },
     
-    getCellTypeLabel(typeValue) {
-      const type = this.scheduleTypes.find(t => t.value === typeValue);
-      return type ? type.label : typeValue;
-    },
-    
-    getTypeColor(typeValue) {
-      const type = this.scheduleTypes.find(t => t.value === typeValue);
-      return type ? type.color : '#cccccc';
-    },
-    
-    getTypeLabel(typeValue) {
-      const type = this.scheduleTypes.find(t => t.value === typeValue);
-      return type ? type.label : typeValue;
-    },
-    
     toggleCell(day, hour) {
       // Ensure day exists in data structure
       if (!this.scheduleData[day]) {
@@ -949,17 +814,13 @@ export default {
       const currentValue = this.getCellValue(day, hour);
       
       // Handle study hours limit enforcement
-      if (this.selectedType === 'study') {
-        // Case 1: Adding study to an empty cell
-        // Case 2: Changing from another activity type to study
-        if (currentValue !== 'study' && this.isStudyDisabled) {
-          this.showGoalWarning();
-          return;
-        }
+      if (currentValue !== 'study' && this.isStudyDisabled) {
+        this.showGoalWarning();
+        return;
       }
       
       // Toggle cell value
-      if (currentValue === this.selectedType) {
+      if (currentValue === 'study') {
         // Remove cell - use spread to create new reference and ensure reactivity
         const newDayData = { ...this.scheduleData[day] };
         delete newDayData[hour];
@@ -968,12 +829,12 @@ export default {
           [day]: newDayData
         };
       } else {
-        // Add or change cell - use spread to create new reference and ensure reactivity
+        // Add cell as study - use spread to create new reference and ensure reactivity
         this.scheduleData = {
           ...this.scheduleData,
           [day]: {
             ...this.scheduleData[day],
-            [hour]: this.selectedType
+            [hour]: 'study'
           }
         };
       }
@@ -1045,11 +906,10 @@ export default {
     // Dynamic styles
     getCellStyle(day, hour) {
       const cellValue = this.getCellValue(day, hour);
-      const typeObj = this.scheduleTypes.find(t => t.value === cellValue);
-      const isDisabled = this.isStudyDisabled && this.selectedType === 'study' && !cellValue;
+      const isDisabled = this.isStudyDisabled && !cellValue;
       
       return {
-        backgroundColor: typeObj ? typeObj.color : (this.content.emptyCellColor || '#ffffff'),
+        backgroundColor: cellValue === 'study' ? (this.content.studyColor || '#4CAF50') : (this.content.emptyCellColor || '#ffffff'),
         borderRight: `1px solid ${this.content.gridLineColor || '#eaeaea'}`,
         borderBottom: `1px solid ${this.content.gridLineColor || '#eaeaea'}`,
         padding: '0',
@@ -1077,32 +937,11 @@ export default {
     },
     
     getCellTextStyle(day, hour) {
-      const cellValue = this.getCellValue(day, hour);
-      const typeObj = this.scheduleTypes.find(t => t.value === cellValue);
-      
       return {
-        color: typeObj ? (typeObj.textColor || '#ffffff') : '#333333',
+        color: this.content.studyTextColor || '#FFFFFF',
         fontSize: '0.85rem',
         fontWeight: '500',
         transition: 'all 0.2s ease',
-      };
-    },
-    
-    getTypeButtonStyle(type) {
-      const isActive = this.selectedType === type.value;
-      
-      return {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '10px 16px',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        backgroundColor: isActive ? (type.color + '20') : 'transparent',  // Transparent version of color
-        color: isActive ? type.color : (this.content.buttonTextColor || '#555'),
-        fontWeight: isActive ? '600' : '400',
       };
     },
     
@@ -1124,7 +963,6 @@ export default {
     
     // External action methods - Métodos para ações externas no WeWeb
     getScheduleData() {
-      // CORREÇÃO CRÍTICA #4: Usa o mesmo método getEventData() para consistência
       return this.getEventData();
     },
     
@@ -1134,10 +972,11 @@ export default {
     },
     
     setCellValue(day, hour, type) {
-      const currentValue = this.getCellValue(day, hour);
+      // Se type for true ou 'study', define como estudo, senão remove
+      const value = type === true || type === 'study' ? 'study' : null;
       
-      // Prevent setting study if at goal (unless removing or it's already study)
-      if (type === 'study' && currentValue !== 'study' && this.isStudyDisabled) {
+      // Verificar se estamos tentando adicionar acima do limite
+      if (value === 'study' && this.getCellValue(day, hour) !== 'study' && this.isStudyDisabled) {
         this.showGoalWarning();
         return;
       }
@@ -1146,7 +985,7 @@ export default {
         this.scheduleData[day] = {};
       }
       
-      if (type === null || type === undefined || type === '') {
+      if (value === null) {
         // Remove value
         const newDayData = { ...this.scheduleData[day] };
         delete newDayData[hour];
@@ -1160,7 +999,7 @@ export default {
           ...this.scheduleData,
           [day]: {
             ...this.scheduleData[day],
-            [hour]: type
+            [hour]: 'study'
           }
         };
       }
@@ -1174,21 +1013,27 @@ export default {
       this.emitChange();
     },
     
-    setSelectedType(type) {
-      const typeExists = this.scheduleTypes.some(t => t.value === type);
-      if (typeExists) {
-        this.selectedType = type;
-        // Não precisamos emitir mudança aqui pois não afeta os dados
-      }
-    },
-    
     importSchedule(data) {
       if (data && typeof data === 'object') {
         try {
           // Se for uma string JSON, tentar parsear
-          const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+          const parsedData = typeof newData === 'string' ? JSON.parse(data) : data;
+          
+          // Filtrar apenas os valores 'study'
+          const filteredData = {};
+          Object.entries(parsedData).forEach(([day, hours]) => {
+            if (hours && Object.keys(hours).length > 0) {
+              filteredData[day] = {};
+              Object.entries(hours).forEach(([hour, type]) => {
+                if (type === 'study') {
+                  filteredData[day][hour] = 'study';
+                }
+              });
+            }
+          });
+          
           // Deep clone para evitar referências
-          this.scheduleData = JSON.parse(JSON.stringify(parsedData));
+          this.scheduleData = JSON.parse(JSON.stringify(filteredData));
           
           // Emit change event explicitamente
           this.emitChange();
@@ -1235,28 +1080,6 @@ export default {
   }
   
   .schedule-header {
-    .activity-types {
-      button {
-        outline: none;
-        
-        .activity-color {
-          width: 12px;
-          height: 12px;
-          border-radius: 4px;
-          display: inline-block;
-        }
-        
-        &:hover {
-          background-color: rgba(0, 0, 0, 0.06);
-          transform: translateY(-1px);
-        }
-        
-        &.active {
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-      }
-    }
-    
     .hours-goal {
       .hours-input-wrapper {
         .hours-adjust-btn {
@@ -1411,25 +1234,6 @@ export default {
           border-radius: 4px;
           z-index: 1;
         }
-      }
-    }
-  }
-  
-  .schedule-legend {
-    .legend-item {
-      white-space: nowrap;
-      transition: transform 0.2s ease;
-      
-      &:hover {
-        transform: translateX(3px);
-        
-        .legend-color {
-          transform: scale(1.1);
-        }
-      }
-      
-      .legend-color {
-        transition: transform 0.2s ease;
       }
     }
   }
