@@ -46,10 +46,30 @@
           >+</button>
         </div>
       </div>
+      
+      <!-- Device switch control (optional) -->
+      <div v-if="content.showDeviceSwitch" class="device-switch" :style="deviceSwitchStyle">
+        <button 
+          :class="{ active: !forceDesktopView }"
+          :style="getDeviceSwitchButtonStyle(!forceDesktopView)"
+          @click="forceDesktopView = false"
+          aria-label="Switch to mobile view"
+        >
+          <span class="icon">📱</span>
+        </button>
+        <button 
+          :class="{ active: forceDesktopView }"
+          :style="getDeviceSwitchButtonStyle(forceDesktopView)"
+          @click="forceDesktopView = true"
+          aria-label="Switch to desktop view"
+        >
+          <span class="icon">💻</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Desktop view with multiple selection support -->
-    <div class="desktop-view" v-if="!isMobileView || content.forceDesktopView">
+    <!-- DESKTOP VIEW -->
+    <div class="desktop-view" v-if="!isMobileView || forceDesktopView">
       <div class="schedule-grid" :style="gridStyle">
         <!-- Header with days -->
         <div class="time-label" :style="cornerCellStyle" aria-hidden="true"></div>
@@ -96,8 +116,8 @@
       </div>
     </div>
     
-    <!-- Mobile view with improved touch interactions -->
-    <div class="mobile-view" v-if="isMobileView && !content.forceDesktopView">
+    <!-- MOBILE VIEW -->
+    <div class="mobile-view" v-if="(isMobileView && !forceDesktopView) || forceAlwaysMobileView">
       <!-- Day selector with swipe support -->
       <div 
         class="day-selector" 
@@ -116,6 +136,11 @@
         >
           {{ day.shortLabel || day.label }}
         </button>
+      </div>
+      
+      <!-- Current day display -->
+      <div class="current-day-display" :style="currentDayDisplayStyle">
+        {{ getDayLabel(selectedMobileDay) }}
       </div>
       
       <!-- Hours grid for selected day with improved visuals -->
@@ -153,6 +178,28 @@
             </span>
           </div>
         </div>
+      </div>
+      
+      <!-- Mobile navigation arrows -->
+      <div class="mobile-day-navigation" :style="mobileNavigationStyle">
+        <button 
+          class="nav-button prev" 
+          :style="mobileNavButtonStyle"
+          @click="navigateToPreviousDay()"
+          :disabled="isPreviousDayDisabled"
+          aria-label="Previous day"
+        >
+          ← {{ getPreviousDayLabel() }}
+        </button>
+        <button 
+          class="nav-button next" 
+          :style="mobileNavButtonStyle"
+          @click="navigateToNextDay()"
+          :disabled="isNextDayDisabled"
+          aria-label="Next day"
+        >
+          {{ getNextDayLabel() }} →
+        </button>
       </div>
     </div>
     
@@ -193,6 +240,8 @@ export default {
       weeklyHoursGoal: 20,
       selectedMobileDay: 'monday',
       isMobileView: false,
+      forceDesktopView: false,
+      forceAlwaysMobileView: false,
       showWarning: false,
       warningTimer: null,
       
@@ -257,6 +306,17 @@ export default {
       return Math.min(percentage, 100); // Cap at 100%
     },
     
+    // Mobile navigation disabled states
+    isPreviousDayDisabled() {
+      const currentIndex = this.days.findIndex(day => day.value === this.selectedMobileDay);
+      return currentIndex <= 0;
+    },
+    
+    isNextDayDisabled() {
+      const currentIndex = this.days.findIndex(day => day.value === this.selectedMobileDay);
+      return currentIndex >= this.days.length - 1;
+    },
+    
     // Versão para uso interno do componente - usa o método para manter consistência
     filledCells() {
       return this.getFilledCellsArray();
@@ -264,7 +324,7 @@ export default {
     
     // Get current day based on view mode
     currentDay() {
-      return this.isMobileView && !this.content.forceDesktopView ? this.selectedMobileDay : this.days[0].value;
+      return this.isMobileView && !this.forceDesktopView ? this.selectedMobileDay : this.days[0].value;
     },
     
     // Computed styles
@@ -347,12 +407,21 @@ export default {
       return {
         padding: '16px 20px',
         display: 'flex',
-        flexDirection: this.isMobileView ? 'column' : 'row',
-        justifyContent: 'flex-end',
-        alignItems: this.isMobileView ? 'stretch' : 'center',
+        flexDirection: this.isMobileView && !this.forceDesktopView ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: this.isMobileView && !this.forceDesktopView ? 'stretch' : 'center',
         gap: '16px',
         borderBottom: `1px solid ${this.content.dividerColor || '#eaeaea'}`,
         backgroundColor: this.content.headerBgColor || '#FFFFFF',
+      };
+    },
+    
+    deviceSwitchStyle() {
+      return {
+        display: 'flex',
+        gap: '8px',
+        justifyContent: 'center',
+        marginTop: this.isMobileView && !this.forceDesktopView ? '8px' : '0',
       };
     },
     
@@ -473,6 +542,18 @@ export default {
       };
     },
     
+    currentDayDisplayStyle() {
+      return {
+        textAlign: 'center',
+        padding: '12px 0',
+        fontWeight: '600',
+        fontSize: '1.1rem',
+        color: this.content.currentDayColor || '#333',
+        backgroundColor: this.content.currentDayBgColor || '#fff',
+        borderBottom: `1px solid ${this.content.dividerColor || '#eaeaea'}`,
+      };
+    },
+    
     mobileGridStyle() {
       return {
         display: 'flex',
@@ -490,10 +571,44 @@ export default {
     
     mobileTimeLabelStyle() {
       return {
-        ...this.timeLabelStyle,
+        padding: '10px',
+        textAlign: 'right',
+        fontSize: '0.85rem',
+        color: this.content.timeLabelColor || '#666',
+        backgroundColor: this.content.timeLabelBgColor || '#f8f9fa',
+        borderRight: `1px solid ${this.content.gridLineColor || '#eaeaea'}`,
+        borderBottom: `1px solid ${this.content.gridLineColor || '#eaeaea'}`,
         width: '80px',
         flexShrink: 0,
-        position: 'static',
+      };
+    },
+    
+    mobileNavigationStyle() {
+      return {
+        display: 'flex',
+        justifyContent: 'space-between',
+        padding: '12px 16px',
+        borderTop: `1px solid ${this.content.dividerColor || '#eaeaea'}`,
+        backgroundColor: this.content.navigationBgColor || '#f8f9fa',
+      };
+    },
+    
+    mobileNavButtonStyle() {
+      return {
+        padding: '8px 16px',
+        backgroundColor: this.content.navButtonBgColor || '#fff',
+        color: this.content.navButtonTextColor || '#555',
+        border: `1px solid ${this.content.navButtonBorderColor || '#ddd'}`,
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontWeight: '500',
+        fontSize: '0.85rem',
+        transition: 'all 0.2s ease',
+        
+        '&:disabled': {
+          opacity: 0.5,
+          cursor: 'not-allowed',
+        },
       };
     },
     
@@ -583,6 +698,22 @@ export default {
         }
       }
     },
+    'content.forceDesktopView': {
+      immediate: true,
+      handler(newValue) {
+        if (newValue !== undefined) {
+          this.forceDesktopView = !!newValue;
+        }
+      }
+    },
+    'content.forceAlwaysMobileView': {
+      immediate: true,
+      handler(newValue) {
+        if (newValue !== undefined) {
+          this.forceAlwaysMobileView = !!newValue;
+        }
+      }
+    },
     'scheduleData': {
       deep: true,
       handler() {
@@ -639,6 +770,9 @@ export default {
       // Emite eventos para garantir que o WeWeb os reconheça
       this.emitChange();
     });
+    
+    // Set initial day to today's day of week if available
+    this.setInitialDay();
   },
   
   beforeUnmount() {
@@ -658,6 +792,70 @@ export default {
   },
   
   methods: {
+    // Inicialização
+    setInitialDay() {
+      // Try to set to today's day of week if available
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const todayName = dayNames[today];
+      
+      // Check if this day exists in our days array
+      if (this.days.some(day => day.value === todayName)) {
+        this.selectedMobileDay = todayName;
+      }
+    },
+    
+    // Mobile navigation methods
+    navigateToNextDay() {
+      const currentIndex = this.days.findIndex(day => day.value === this.selectedMobileDay);
+      if (currentIndex < this.days.length - 1) {
+        this.selectedMobileDay = this.days[currentIndex + 1].value;
+        
+        // Scroll the day selector to show the active day
+        this.$nextTick(() => {
+          if (this.$refs.daySelector) {
+            const buttons = this.$refs.daySelector.querySelectorAll('.day-selector-btn');
+            if (buttons[currentIndex + 1]) {
+              buttons[currentIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+          }
+        });
+      }
+    },
+    
+    navigateToPreviousDay() {
+      const currentIndex = this.days.findIndex(day => day.value === this.selectedMobileDay);
+      if (currentIndex > 0) {
+        this.selectedMobileDay = this.days[currentIndex - 1].value;
+        
+        // Scroll the day selector to show the active day
+        this.$nextTick(() => {
+          if (this.$refs.daySelector) {
+            const buttons = this.$refs.daySelector.querySelectorAll('.day-selector-btn');
+            if (buttons[currentIndex - 1]) {
+              buttons[currentIndex - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+          }
+        });
+      }
+    },
+    
+    getNextDayLabel() {
+      const currentIndex = this.days.findIndex(day => day.value === this.selectedMobileDay);
+      if (currentIndex < this.days.length - 1) {
+        return this.days[currentIndex + 1].shortLabel || this.days[currentIndex + 1].label;
+      }
+      return '';
+    },
+    
+    getPreviousDayLabel() {
+      const currentIndex = this.days.findIndex(day => day.value === this.selectedMobileDay);
+      if (currentIndex > 0) {
+        return this.days[currentIndex - 1].shortLabel || this.days[currentIndex - 1].label;
+      }
+      return '';
+    },
+    
     // Data utilities
     formatDateToISOString(date) {
       return date.toISOString().split('T')[0];
@@ -843,6 +1041,20 @@ export default {
       this.emitChange();
     },
     
+    // Style methods
+    getDeviceSwitchButtonStyle(isActive) {
+      return {
+        padding: '8px 12px',
+        backgroundColor: isActive ? (this.content.activeSwitchBgColor || '#e0e0e0') : 'transparent',
+        color: this.content.buttonTextColor || '#555',
+        border: `1px solid ${this.content.inputBorderColor || '#ddd'}`,
+        borderRadius: isActive ? '8px' : '8px',
+        cursor: 'pointer',
+        fontWeight: isActive ? '600' : '400',
+        transition: 'all 0.2s ease',
+      };
+    },
+    
     // Progress indicator methods
     getWeeklyProgressLabel() {
       return `${this.studyHours} / ${this.weeklyHoursGoal} horas de estudo (${Math.round(this.weeklyProgressPercentage)}%)`;
@@ -876,27 +1088,13 @@ export default {
     handleTouchEnd() {
       // If the swipe was significant enough, change the selected day
       if (Math.abs(this.touchDeltaX) > 50) {
-        const dayIndex = this.days.findIndex(day => day.value === this.selectedMobileDay);
-        let newIndex = dayIndex;
-        
         if (this.touchDeltaX < 0) {
           // Swipe left - next day
-          newIndex = Math.min(dayIndex + 1, this.days.length - 1);
+          this.navigateToNextDay();
         } else {
           // Swipe right - previous day
-          newIndex = Math.max(dayIndex - 1, 0);
+          this.navigateToPreviousDay();
         }
-        
-        this.selectedMobileDay = this.days[newIndex].value;
-        
-        // Scroll to the selected day button
-        this.$nextTick(() => {
-          const selector = this.$refs.daySelector;
-          const buttons = selector.querySelectorAll('.day-selector-btn');
-          if (buttons[newIndex]) {
-            buttons[newIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-          }
-        });
       }
       
       this.touchStartX = 0;
@@ -1013,11 +1211,34 @@ export default {
       this.emitChange();
     },
     
+    setViewMode(mode) {
+      if (mode === 'desktop') {
+        this.forceDesktopView = true;
+        this.forceAlwaysMobileView = false;
+      } else if (mode === 'mobile') {
+        this.forceDesktopView = false;
+        this.forceAlwaysMobileView = true;
+      } else {
+        // Auto mode - use device detection
+        this.forceDesktopView = false;
+        this.forceAlwaysMobileView = false;
+      }
+      
+      // Update content
+      /* wwEditor:start */
+      this.$emit('update:content', {
+        ...this.content,
+        forceDesktopView: this.forceDesktopView,
+        forceAlwaysMobileView: this.forceAlwaysMobileView
+      });
+      /* wwEditor:end */
+    },
+    
     importSchedule(data) {
       if (data && typeof data === 'object') {
         try {
           // Se for uma string JSON, tentar parsear
-          const parsedData = typeof newData === 'string' ? JSON.parse(data) : data;
+          const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
           
           // Filtrar apenas os valores 'study'
           const filteredData = {};
@@ -1025,7 +1246,7 @@ export default {
             if (hours && Object.keys(hours).length > 0) {
               filteredData[day] = {};
               Object.entries(hours).forEach(([hour, type]) => {
-                if (type === 'study') {
+                if (type === 'study' || type === true) {
                   filteredData[day][hour] = 'study';
                 }
               });
@@ -1096,6 +1317,22 @@ export default {
           &:focus {
             background-color: rgba(33, 150, 243, 0.05);
           }
+        }
+      }
+    }
+    
+    .device-switch {
+      button {
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        &:active {
+          background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .icon {
+          font-size: 16px;
         }
       }
     }
@@ -1197,6 +1434,32 @@ export default {
         
         &.active {
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+      }
+    }
+    
+    .mobile-day-navigation {
+      .nav-button {
+        &:not(:disabled):hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        &:not(:disabled):active {
+          transform: translateY(0);
+        }
+        
+        &.prev {
+          padding-left: 12px;
+        }
+        
+        &.next {
+          padding-right: 12px;
+        }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       }
     }
