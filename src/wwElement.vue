@@ -46,26 +46,6 @@
           >+</button>
         </div>
       </div>
-      
-      <!-- Device switch control (optional) -->
-      <div v-if="content.showDeviceSwitch" class="device-switch" :style="deviceSwitchStyle">
-        <button 
-          :class="{ active: !forceDesktopView }"
-          :style="getDeviceSwitchButtonStyle(!forceDesktopView)"
-          @click="forceDesktopView = false"
-          aria-label="Switch to mobile view"
-        >
-          <span class="icon">📱</span>
-        </button>
-        <button 
-          :class="{ active: forceDesktopView }"
-          :style="getDeviceSwitchButtonStyle(forceDesktopView)"
-          @click="forceDesktopView = true"
-          aria-label="Switch to desktop view"
-        >
-          <span class="icon">💻</span>
-        </button>
-      </div>
     </div>
 
     <!-- DESKTOP VIEW -->
