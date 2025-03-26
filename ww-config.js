@@ -2,21 +2,38 @@ export default {
   editor: {
     label: {
       en: 'Weekly Schedule',
-      pt: 'Agenda Semanal',
+      pt: 'Cronograma Semanal',
     },
-    icon: 'mdi-calendar-week',
-    type: 'element', // Explicitamente definindo como elemento
+    icon: 'calendar-days',
+    bubble: {
+      icon: 'calendar-days',
+    },
+    customStylePropertiesOrder: [
+      'backgroundColor',
+      'textColor',
+      'titleColor',
+      'secondaryTextColor',
+      'borderColor',
+      'dividerColor',
+      'gridLineColor',
+      'fontFamily',
+      'borderRadius',
+      'showShadow',
+      'shadowStyle',
+      'showBorder',
+    ],
   },
   properties: {
-    // Conteúdo básico
+    // Main configuration
     title: {
       label: {
         en: 'Title',
         pt: 'Título',
       },
       type: 'Text',
-      defaultValue: 'Agenda Semanal',
+      defaultValue: 'Weekly Schedule',
       bindable: true,
+      section: 'Content',
     },
     showTitle: {
       label: {
@@ -25,22 +42,17 @@ export default {
       },
       type: 'OnOff',
       defaultValue: true,
-      bindable: true,
+      section: 'Content',
     },
-
-    // Configurações de horas
     weeklyHoursGoal: {
       label: {
         en: 'Weekly Hours Goal',
         pt: 'Meta de Horas Semanais',
       },
       type: 'Number',
-      options: {
-        min: 0,
-        max: 168,
-      },
       defaultValue: 20,
       bindable: true,
+      section: 'Content',
     },
     hoursGoalLabel: {
       label: {
@@ -50,79 +62,21 @@ export default {
       type: 'Text',
       defaultValue: 'Meta de horas de estudo:',
       bindable: true,
+      section: 'Content',
     },
-
-    // Configurações de alerta
-    warningMessage: {
-      label: {
-        en: 'Goal Reached Warning',
-        pt: 'Aviso de Meta Atingida',
-      },
-      type: 'Text',
-      defaultValue: 'Você atingiu sua meta de horas de estudo para a semana!',
-      bindable: true,
-    },
-
-    // Visualização
-    showProgressBar: {
-      label: {
-        en: 'Show Progress Bar',
-        pt: 'Mostrar Barra de Progresso',
-      },
-      type: 'OnOff',
-      defaultValue: true,
-      bindable: true,
-    },
-    showLegend: {
-      label: {
-        en: 'Show Legend',
-        pt: 'Mostrar Legenda',
-      },
-      type: 'OnOff',
-      defaultValue: true,
-      bindable: true,
-    },
-    showHoursStatus: {
-      label: {
-        en: 'Show Hours Status',
-        pt: 'Mostrar Status de Horas',
-      },
-      type: 'OnOff',
-      defaultValue: true,
-      bindable: true,
-    },
-    forceDesktopView: {
-      label: {
-        en: 'Force Desktop View',
-        pt: 'Forçar Visualização Desktop',
-      },
-      type: 'OnOff',
-      defaultValue: false,
-      bindable: true,
-    },
-    mobileBreakpoint: {
-      label: {
-        en: 'Mobile Breakpoint (px)',
-        pt: 'Breakpoint Mobile (px)',
-      },
-      type: 'Number',
-      defaultValue: 768,
-      bindable: true,
-    },
-
-    // Horários visíveis
     startHour: {
       label: {
         en: 'Start Hour',
         pt: 'Hora Inicial',
       },
       type: 'Number',
+      defaultValue: 6,
+      bindable: true,
+      section: 'Content',
       options: {
         min: 0,
         max: 23,
       },
-      defaultValue: 6,
-      bindable: true,
     },
     endHour: {
       label: {
@@ -130,29 +84,41 @@ export default {
         pt: 'Hora Final',
       },
       type: 'Number',
+      defaultValue: 22,
+      bindable: true,
+      section: 'Content',
       options: {
         min: 0,
         max: 23,
       },
-      defaultValue: 22,
-      bindable: true,
     },
 
-    // Dados iniciais (configuráveis via JSON)
+    // Schedule Data
     initialData: {
       label: {
-        en: 'Initial Schedule Data (JSON)',
-        pt: 'Dados Iniciais da Agenda (JSON)',
+        en: 'Initial Schedule Data',
+        pt: 'Dados Iniciais da Agenda',
       },
       type: 'Text',
       defaultValue: '{}',
-      hidden: true,
       bindable: true,
+      section: 'Data',
+      /* wwEditor:start */
+      options: {
+        expandable: true,
+      },
+      /* wwEditor:end */
     },
 
-    // Arrays de configuração
+    // Schedule Types (Activity Types)
     scheduleTypes: {
-      hidden: true,
+      label: {
+        en: 'Schedule Types',
+        pt: 'Tipos de Atividades',
+      },
+      type: 'Array',
+      bindable: true,
+      section: 'Types',
       defaultValue: [
         {
           value: 'study',
@@ -183,10 +149,58 @@ export default {
           legend: 'Trabalho',
         },
       ],
-      bindable: true,
+      /* wwEditor:start */
+      options: {
+        item: {
+          value: {
+            label: {
+              en: 'Value',
+              pt: 'Valor',
+            },
+            type: 'Text',
+          },
+          label: {
+            label: {
+              en: 'Label',
+              pt: 'Rótulo',
+            },
+            type: 'Text',
+          },
+          color: {
+            label: {
+              en: 'Color',
+              pt: 'Cor',
+            },
+            type: 'Color',
+          },
+          textColor: {
+            label: {
+              en: 'Text Color',
+              pt: 'Cor do Texto',
+            },
+            type: 'Color',
+          },
+          legend: {
+            label: {
+              en: 'Legend',
+              pt: 'Legenda',
+            },
+            type: 'Text',
+          },
+        },
+      },
+      /* wwEditor:end */
     },
+
+    // Days configuration
     days: {
-      hidden: true,
+      label: {
+        en: 'Days',
+        pt: 'Dias',
+      },
+      type: 'Array',
+      bindable: true,
+      section: 'Days',
       defaultValue: [
         { value: 'sunday', label: 'Domingo', shortLabel: 'Dom' },
         { value: 'monday', label: 'Segunda', shortLabel: 'Seg' },
@@ -196,123 +210,44 @@ export default {
         { value: 'friday', label: 'Sexta', shortLabel: 'Sex' },
         { value: 'saturday', label: 'Sábado', shortLabel: 'Sáb' },
       ],
-      bindable: true,
+      /* wwEditor:start */
+      options: {
+        item: {
+          value: {
+            label: {
+              en: 'Value',
+              pt: 'Valor',
+            },
+            type: 'Text',
+          },
+          label: {
+            label: {
+              en: 'Label',
+              pt: 'Rótulo',
+            },
+            type: 'Text',
+          },
+          shortLabel: {
+            label: {
+              en: 'Short Label',
+              pt: 'Rótulo Curto',
+            },
+            type: 'Text',
+          },
+        },
+      },
+      /* wwEditor:end */
     },
 
-    // Estilos principais
-    fontFamily: {
+    // Progress Bar
+    showProgressBar: {
       label: {
-        en: 'Font Family',
-        pt: 'Família de Fontes',
-      },
-      type: 'FontFamily',
-      defaultValue: 'Inter, system-ui, sans-serif',
-      bindable: true,
-    },
-    textColor: {
-      label: {
-        en: 'Text Color',
-        pt: 'Cor do Texto',
-      },
-      type: 'Color',
-      defaultValue: '#333333',
-      bindable: true,
-    },
-    backgroundColor: {
-      label: {
-        en: 'Background Color',
-        pt: 'Cor de Fundo',
-      },
-      type: 'Color',
-      defaultValue: '#FFFFFF',
-      bindable: true,
-    },
-    borderRadius: {
-      label: {
-        en: 'Border Radius',
-        pt: 'Raio da Borda',
-      },
-      type: 'Length',
-      defaultValue: '16px',
-      bindable: true,
-    },
-
-    // Opções de borda e sombra
-    showShadow: {
-      label: {
-        en: 'Show Shadow',
-        pt: 'Mostrar Sombra',
+        en: 'Show Progress Bar',
+        pt: 'Mostrar Barra de Progresso',
       },
       type: 'OnOff',
       defaultValue: true,
-      bindable: true,
-    },
-    shadowStyle: {
-      label: {
-        en: 'Shadow Style',
-        pt: 'Estilo da Sombra',
-      },
-      type: 'Text',
-      defaultValue: '0 8px 30px rgba(0,0,0,0.12)',
-      bindable: true,
-    },
-    showBorder: {
-      label: {
-        en: 'Show Border',
-        pt: 'Mostrar Borda',
-      },
-      type: 'OnOff',
-      defaultValue: true,
-      bindable: true,
-    },
-    borderColor: {
-      label: {
-        en: 'Border Color',
-        pt: 'Cor da Borda',
-      },
-      type: 'Color',
-      defaultValue: '#eaeaea',
-      bindable: true,
-    },
-
-    // Estilos específicos
-    titleColor: {
-      label: {
-        en: 'Title Color',
-        pt: 'Cor do Título',
-      },
-      type: 'Color',
-      defaultValue: '#333333',
-      bindable: true,
-    },
-    titleSize: {
-      label: {
-        en: 'Title Size',
-        pt: 'Tamanho do Título',
-      },
-      type: 'Length',
-      defaultValue: '1.4rem',
-      bindable: true,
-    },
-    secondaryTextColor: {
-      label: {
-        en: 'Secondary Text Color',
-        pt: 'Cor de Texto Secundária',
-      },
-      type: 'Color',
-      defaultValue: '#666666',
-      bindable: true,
-    },
-
-    // Cores e estilos da barra de progresso
-    progressBarBgColor: {
-      label: {
-        en: 'Progress Bar Background',
-        pt: 'Fundo da Barra de Progresso',
-      },
-      type: 'Color',
-      defaultValue: '#e6e6e6',
-      bindable: true,
+      section: 'Progress',
     },
     progressBarColor: {
       label: {
@@ -321,160 +256,47 @@ export default {
       },
       type: 'Color',
       defaultValue: '#4CAF50',
-      bindable: true,
+      section: 'Progress',
     },
     progressBarLowColor: {
       label: {
         en: 'Progress Bar Low Color',
-        pt: 'Cor Baixa da Barra de Progresso',
+        pt: 'Cor da Barra de Progresso (Baixo)',
       },
       type: 'Color',
       defaultValue: '#FFC107',
-      bindable: true,
+      section: 'Progress',
     },
     progressBarVeryLowColor: {
       label: {
         en: 'Progress Bar Very Low Color',
-        pt: 'Cor Muito Baixa da Barra de Progresso',
+        pt: 'Cor da Barra de Progresso (Muito Baixo)',
       },
       type: 'Color',
       defaultValue: '#F44336',
-      bindable: true,
+      section: 'Progress',
+    },
+    progressBarBgColor: {
+      label: {
+        en: 'Progress Bar Background',
+        pt: 'Fundo da Barra de Progresso',
+      },
+      type: 'Color',
+      defaultValue: '#e6e6e6',
+      section: 'Progress',
     },
 
-    // Grades e células
-    dividerColor: {
+    // Warning Message
+    warningMessage: {
       label: {
-        en: 'Divider Color',
-        pt: 'Cor do Divisor',
+        en: 'Goal Warning Message',
+        pt: 'Mensagem de Aviso de Meta',
       },
-      type: 'Color',
-      defaultValue: '#eaeaea',
+      type: 'Text',
+      defaultValue: 'Você atingiu sua meta de horas de estudo para a semana!',
       bindable: true,
+      section: 'Warning',
     },
-    gridLineColor: {
-      label: {
-        en: 'Grid Line Color',
-        pt: 'Cor da Linha da Grade',
-      },
-      type: 'Color',
-      defaultValue: '#eaeaea',
-      bindable: true,
-    },
-    cellHeight: {
-      label: {
-        en: 'Cell Height',
-        pt: 'Altura da Célula',
-      },
-      type: 'Length',
-      defaultValue: '52px',
-      bindable: true,
-    },
-    mobileCellHeight: {
-      label: {
-        en: 'Mobile Cell Height',
-        pt: 'Altura da Célula Mobile',
-      },
-      type: 'Length',
-      defaultValue: '60px',
-      bindable: true,
-    },
-    emptyCellColor: {
-      label: {
-        en: 'Empty Cell Color',
-        pt: 'Cor da Célula Vazia',
-      },
-      type: 'Color',
-      defaultValue: '#ffffff',
-      bindable: true,
-    },
-
-    // Cabeçalhos e rótulos
-    headerBgColor: {
-      label: {
-        en: 'Header Background',
-        pt: 'Fundo do Cabeçalho',
-      },
-      type: 'Color',
-      defaultValue: '#FFFFFF',
-      bindable: true,
-    },
-    dayHeaderBgColor: {
-      label: {
-        en: 'Day Header Background',
-        pt: 'Fundo do Cabeçalho de Dia',
-      },
-      type: 'Color',
-      defaultValue: '#f8f9fa',
-      bindable: true,
-    },
-    cornerCellColor: {
-      label: {
-        en: 'Corner Cell Color',
-        pt: 'Cor da Célula de Canto',
-      },
-      type: 'Color',
-      defaultValue: '#f8f9fa',
-      bindable: true,
-    },
-    timeLabelColor: {
-      label: {
-        en: 'Time Label Color',
-        pt: 'Cor do Rótulo de Hora',
-      },
-      type: 'Color',
-      defaultValue: '#666666',
-      bindable: true,
-    },
-    timeLabelBgColor: {
-      label: {
-        en: 'Time Label Background',
-        pt: 'Fundo do Rótulo de Hora',
-      },
-      type: 'Color',
-      defaultValue: '#f8f9fa',
-      bindable: true,
-    },
-
-    // Estilos Mobile
-    daySelectorBgColor: {
-      label: {
-        en: 'Day Selector Background',
-        pt: 'Fundo do Seletor de Dia',
-      },
-      type: 'Color',
-      defaultValue: '#f8f9fa',
-      bindable: true,
-    },
-    activeDayBgColor: {
-      label: {
-        en: 'Active Day Background',
-        pt: 'Fundo do Dia Ativo',
-      },
-      type: 'Color',
-      defaultValue: '#2196F3',
-      bindable: true,
-    },
-    activeDayTextColor: {
-      label: {
-        en: 'Active Day Text Color',
-        pt: 'Cor do Texto do Dia Ativo',
-      },
-      type: 'Color',
-      defaultValue: '#ffffff',
-      bindable: true,
-    },
-    inactiveDayColor: {
-      label: {
-        en: 'Inactive Day Color',
-        pt: 'Cor do Dia Inativo',
-      },
-      type: 'Color',
-      defaultValue: '#555555',
-      bindable: true,
-    },
-
-    // Mensagem de aviso
     warningBgColor: {
       label: {
         en: 'Warning Background',
@@ -482,28 +304,37 @@ export default {
       },
       type: 'Color',
       defaultValue: '#FFF3CD',
-      bindable: true,
+      section: 'Warning',
     },
     warningTextColor: {
       label: {
         en: 'Warning Text Color',
-        pt: 'Cor do Texto de Aviso',
+        pt: 'Cor do Texto do Aviso',
       },
       type: 'Color',
       defaultValue: '#856404',
-      bindable: true,
+      section: 'Warning',
     },
     warningBorderColor: {
       label: {
         en: 'Warning Border Color',
-        pt: 'Cor da Borda de Aviso',
+        pt: 'Cor da Borda do Aviso',
       },
       type: 'Color',
       defaultValue: '#FFEEBA',
-      bindable: true,
+      section: 'Warning',
     },
 
-    // Legenda e status
+    // Legend
+    showLegend: {
+      label: {
+        en: 'Show Legend',
+        pt: 'Mostrar Legenda',
+      },
+      type: 'OnOff',
+      defaultValue: true,
+      section: 'Legend',
+    },
     legendBgColor: {
       label: {
         en: 'Legend Background',
@@ -511,7 +342,7 @@ export default {
       },
       type: 'Color',
       defaultValue: '#f8f9fa',
-      bindable: true,
+      section: 'Legend',
     },
     legendTextColor: {
       label: {
@@ -519,17 +350,28 @@ export default {
         pt: 'Cor do Texto da Legenda',
       },
       type: 'Color',
-      defaultValue: '#666666',
-      bindable: true,
+      defaultValue: '#666',
+      section: 'Legend',
     },
     legendColorRadius: {
       label: {
         en: 'Legend Color Radius',
-        pt: 'Raio da Cor da Legenda',
+        pt: 'Raio das Cores da Legenda',
       },
-      type: 'Length',
+      type: 'Text',
       defaultValue: '4px',
-      bindable: true,
+      section: 'Legend',
+    },
+
+    // Status Section
+    showHoursStatus: {
+      label: {
+        en: 'Show Hours Status',
+        pt: 'Mostrar Status das Horas',
+      },
+      type: 'OnOff',
+      defaultValue: true,
+      section: 'Status',
     },
     statusBgColor: {
       label: {
@@ -538,7 +380,7 @@ export default {
       },
       type: 'Color',
       defaultValue: '#ffffff',
-      bindable: true,
+      section: 'Status',
     },
     statusItemBgColor: {
       label: {
@@ -547,7 +389,7 @@ export default {
       },
       type: 'Color',
       defaultValue: '#f8f8f8',
-      bindable: true,
+      section: 'Status',
     },
     statusLabelColor: {
       label: {
@@ -555,8 +397,8 @@ export default {
         pt: 'Cor do Rótulo de Status',
       },
       type: 'Color',
-      defaultValue: '#444444',
-      bindable: true,
+      defaultValue: '#444',
+      section: 'Status',
     },
     statusHoursColor: {
       label: {
@@ -564,11 +406,168 @@ export default {
         pt: 'Cor das Horas de Status',
       },
       type: 'Color',
-      defaultValue: '#333333',
-      bindable: true,
+      defaultValue: '#333',
+      section: 'Status',
     },
 
-    // Elementos de entrada e botões
+    // Mobile Settings
+    mobileBreakpoint: {
+      label: {
+        en: 'Mobile Breakpoint',
+        pt: 'Ponto de Quebra Mobile',
+      },
+      type: 'Number',
+      defaultValue: 768,
+      section: 'Mobile',
+    },
+    forceDesktopView: {
+      label: {
+        en: 'Force Desktop View',
+        pt: 'Forçar Visualização Desktop',
+      },
+      type: 'OnOff',
+      defaultValue: false,
+      section: 'Mobile',
+    },
+    mobileCellHeight: {
+      label: {
+        en: 'Mobile Cell Height',
+        pt: 'Altura da Célula Mobile',
+      },
+      type: 'Text',
+      defaultValue: '60px',
+      section: 'Mobile',
+    },
+    activeDayBgColor: {
+      label: {
+        en: 'Active Day Background',
+        pt: 'Fundo do Dia Ativo',
+      },
+      type: 'Color',
+      defaultValue: '#2196F3',
+      section: 'Mobile',
+    },
+    activeDayTextColor: {
+      label: {
+        en: 'Active Day Text Color',
+        pt: 'Cor do Texto do Dia Ativo',
+      },
+      type: 'Color',
+      defaultValue: '#ffffff',
+      section: 'Mobile',
+    },
+    inactiveDayColor: {
+      label: {
+        en: 'Inactive Day Color',
+        pt: 'Cor do Dia Inativo',
+      },
+      type: 'Color',
+      defaultValue: '#555',
+      section: 'Mobile',
+    },
+
+    // Grid Style Properties
+    cellHeight: {
+      label: {
+        en: 'Cell Height',
+        pt: 'Altura da Célula',
+      },
+      type: 'Text',
+      defaultValue: '52px',
+      section: 'Grid',
+    },
+    emptyCellColor: {
+      label: {
+        en: 'Empty Cell Color',
+        pt: 'Cor da Célula Vazia',
+      },
+      type: 'Color',
+      defaultValue: '#ffffff',
+      section: 'Grid',
+    },
+    cornerCellColor: {
+      label: {
+        en: 'Corner Cell Color',
+        pt: 'Cor da Célula de Canto',
+      },
+      type: 'Color',
+      defaultValue: '#f8f9fa',
+      section: 'Grid',
+    },
+    dayHeaderBgColor: {
+      label: {
+        en: 'Day Header Background',
+        pt: 'Fundo do Cabeçalho do Dia',
+      },
+      type: 'Color',
+      defaultValue: '#f8f9fa',
+      section: 'Grid',
+    },
+    timeLabelColor: {
+      label: {
+        en: 'Time Label Color',
+        pt: 'Cor do Rótulo da Hora',
+      },
+      type: 'Color',
+      defaultValue: '#666',
+      section: 'Grid',
+    },
+    timeLabelBgColor: {
+      label: {
+        en: 'Time Label Background',
+        pt: 'Fundo do Rótulo da Hora',
+      },
+      type: 'Color',
+      defaultValue: '#f8f9fa',
+      section: 'Grid',
+    },
+    gridLineColor: {
+      label: {
+        en: 'Grid Line Color',
+        pt: 'Cor da Linha da Grade',
+      },
+      type: 'Color',
+      defaultValue: '#eaeaea',
+      section: 'Grid',
+    },
+    daySelectorBgColor: {
+      label: {
+        en: 'Day Selector Background',
+        pt: 'Fundo do Seletor de Dia',
+      },
+      type: 'Color',
+      defaultValue: '#f8f9fa',
+      section: 'Grid',
+    },
+
+    // Input Styling
+    inputBgColor: {
+      label: {
+        en: 'Input Background',
+        pt: 'Fundo do Input',
+      },
+      type: 'Color',
+      defaultValue: '#fff',
+      section: 'Inputs',
+    },
+    inputTextColor: {
+      label: {
+        en: 'Input Text Color',
+        pt: 'Cor do Texto do Input',
+      },
+      type: 'Color',
+      defaultValue: '#333',
+      section: 'Inputs',
+    },
+    inputBorderColor: {
+      label: {
+        en: 'Input Border Color',
+        pt: 'Cor da Borda do Input',
+      },
+      type: 'Color',
+      defaultValue: '#ddd',
+      section: 'Inputs',
+    },
     buttonBgColor: {
       label: {
         en: 'Button Background',
@@ -576,7 +575,7 @@ export default {
       },
       type: 'Color',
       defaultValue: '#f5f5f5',
-      bindable: true,
+      section: 'Inputs',
     },
     buttonTextColor: {
       label: {
@@ -584,107 +583,225 @@ export default {
         pt: 'Cor do Texto do Botão',
       },
       type: 'Color',
-      defaultValue: '#555555',
-      bindable: true,
+      defaultValue: '#555',
+      section: 'Inputs',
     },
-    inputBorderColor: {
+
+    // Header
+    headerBgColor: {
       label: {
-        en: 'Input Border Color',
-        pt: 'Cor da Borda de Entrada',
+        en: 'Header Background',
+        pt: 'Fundo do Cabeçalho',
       },
       type: 'Color',
-      defaultValue: '#dddddd',
-      bindable: true,
+      defaultValue: '#FFFFFF',
+      section: 'Header',
+    },
+    titleSize: {
+      label: {
+        en: 'Title Size',
+        pt: 'Tamanho do Título',
+      },
+      type: 'Text',
+      defaultValue: '1.4rem',
+      section: 'Header',
+    },
+
+    // Global Style Properties
+    backgroundColor: {
+      label: {
+        en: 'Background Color',
+        pt: 'Cor de Fundo',
+      },
+      type: 'Color',
+      defaultValue: '#ffffff',
+      section: 'Style',
+    },
+    textColor: {
+      label: {
+        en: 'Text Color',
+        pt: 'Cor do Texto',
+      },
+      type: 'Color',
+      defaultValue: '#333',
+      section: 'Style',
+    },
+    titleColor: {
+      label: {
+        en: 'Title Color',
+        pt: 'Cor do Título',
+      },
+      type: 'Color',
+      defaultValue: '#333',
+      section: 'Style',
+    },
+    secondaryTextColor: {
+      label: {
+        en: 'Secondary Text Color',
+        pt: 'Cor do Texto Secundário',
+      },
+      type: 'Color',
+      defaultValue: '#666',
+      section: 'Style',
+    },
+    borderColor: {
+      label: {
+        en: 'Border Color',
+        pt: 'Cor da Borda',
+      },
+      type: 'Color',
+      defaultValue: '#eaeaea',
+      section: 'Style',
+    },
+    dividerColor: {
+      label: {
+        en: 'Divider Color',
+        pt: 'Cor do Divisor',
+      },
+      type: 'Color',
+      defaultValue: '#eaeaea',
+      section: 'Style',
+    },
+    fontFamily: {
+      label: {
+        en: 'Font Family',
+        pt: 'Família de Fonte',
+      },
+      type: 'Text',
+      defaultValue: 'Inter, system-ui, sans-serif',
+      section: 'Style',
+    },
+    borderRadius: {
+      label: {
+        en: 'Border Radius',
+        pt: 'Raio da Borda',
+      },
+      type: 'Text',
+      defaultValue: '16px',
+      section: 'Style',
+    },
+    showShadow: {
+      label: {
+        en: 'Show Shadow',
+        pt: 'Mostrar Sombra',
+      },
+      type: 'OnOff',
+      defaultValue: true,
+      section: 'Style',
+    },
+    shadowStyle: {
+      label: {
+        en: 'Shadow Style',
+        pt: 'Estilo da Sombra',
+      },
+      type: 'Text',
+      defaultValue: '0 8px 30px rgba(0,0,0,0.12)',
+      section: 'Style',
+    },
+    showBorder: {
+      label: {
+        en: 'Show Border',
+        pt: 'Mostrar Borda',
+      },
+      type: 'OnOff',
+      defaultValue: true,
+      section: 'Style',
     },
   },
-  classes: {
-    // Mudança de "sections" para "elements" já que este é um elemento, não uma seção
-    elements: ['weekly-schedule'],
-    panels: [
-      {
-        label: { en: 'General', pt: 'Geral' },
-        options: [
-          'title',
-          'showTitle',
-          'weeklyHoursGoal',
-          'hoursGoalLabel',
-          'warningMessage',
-        ],
-      },
-      {
-        label: { en: 'Display', pt: 'Exibição' },
-        options: [
-          'showProgressBar',
-          'showLegend',
-          'showHoursStatus',
-          'forceDesktopView',
-          'startHour',
-          'endHour',
-        ],
-      },
-      {
-        label: { en: 'Style', pt: 'Estilo' },
-        options: [
-          'fontFamily',
-          'textColor',
-          'backgroundColor',
-          'borderRadius',
-          'showShadow',
-          'shadowStyle',
-          'showBorder',
-          'borderColor',
-        ],
-      },
-      {
-        label: { en: 'Colors', pt: 'Cores' },
-        options: [
-          'titleColor',
-          'titleSize',
-          'secondaryTextColor',
-          'progressBarBgColor',
-          'progressBarColor',
-          'dividerColor',
-          'gridLineColor',
-        ],
-      },
-    ],
-  },
-  // MUDANÇA IMPORTANTE: Removida a seção "interactions" para evitar conflitos
-  // Os eventos agora são declarados diretamente no componente Vue
 
+  // Event triggers definition
+  triggerEvents: [
+    {
+      name: 'scheduleChanged',
+      label: {
+        en: 'On Schedule Changed',
+        pt: 'Ao Alterar a Agenda',
+      },
+      event: {
+        filledCells: 'array',
+        studyHours: 'number',
+        weeklyHoursGoal: 'number',
+        weeklyProgressPercentage: 'number',
+      },
+    },
+  ],
+
+  // Getters
+  getters: {
+    scheduleData: {
+      label: {
+        en: 'Schedule Data',
+        pt: 'Dados da Agenda',
+      },
+      description: {
+        en: 'Returns the current schedule data',
+        pt: 'Retorna os dados atuais da agenda',
+      },
+      getter: 'return this.getScheduleData();',
+    },
+    studyHours: {
+      label: {
+        en: 'Study Hours',
+        pt: 'Horas de Estudo',
+      },
+      description: {
+        en: 'Returns the current study hours count',
+        pt: 'Retorna a contagem atual de horas de estudo',
+      },
+      getter: 'return this.studyHours;',
+    },
+  },
+
+  // Actions
   actions: [
     {
       name: 'clearSchedule',
-      label: { en: 'Clear Schedule', pt: 'Limpar Agenda' },
+      label: {
+        en: 'Clear Schedule',
+        pt: 'Limpar Agenda',
+      },
+      action: `
+this.clearSchedule();
+`,
     },
     {
       name: 'setCellValue',
-      label: { en: 'Set Cell Value', pt: 'Definir Valor da Célula' },
-      parameters: [
+      label: {
+        en: 'Set Cell Value',
+        pt: 'Definir Valor da Célula',
+      },
+      params: [
         {
           name: 'day',
-          type: 'String',
-          options: [
-            'sunday',
-            'monday',
-            'tuesday',
-            'wednesday',
-            'thursday',
-            'friday',
-            'saturday',
-          ],
+          type: 'string',
+          label: {
+            en: 'Day',
+            pt: 'Dia',
+          },
+          required: true,
         },
         {
           name: 'hour',
-          type: 'Number',
-          options: { min: 0, max: 23 },
+          type: 'number',
+          label: {
+            en: 'Hour',
+            pt: 'Hora',
+          },
+          required: true,
         },
         {
           name: 'type',
-          type: 'String',
-          options: ['study', 'class', 'leisure', 'work', ''],
+          type: 'string',
+          label: {
+            en: 'Type',
+            pt: 'Tipo',
+          },
+          required: true,
         },
       ],
+      action: `
+this.setCellValue(params.day, params.hour, params.type);
+`,
     },
     {
       name: 'setWeeklyHoursGoal',
@@ -692,40 +809,20 @@ export default {
         en: 'Set Weekly Hours Goal',
         pt: 'Definir Meta de Horas Semanais',
       },
-      parameters: [
+      params: [
         {
           name: 'goal',
-          type: 'Number',
-          options: { min: 0, max: 168 },
+          type: 'number',
+          label: {
+            en: 'Goal',
+            pt: 'Meta',
+          },
+          required: true,
         },
       ],
-    },
-    {
-      name: 'importSchedule',
-      label: { en: 'Import Schedule Data', pt: 'Importar Dados da Agenda' },
-      parameters: [
-        {
-          name: 'data',
-          type: 'Object',
-        },
-      ],
-    },
-  ],
-  getters: [
-    {
-      name: 'getScheduleData',
-      label: { en: 'Get Schedule Data', pt: 'Obter Dados da Agenda' },
-      return: {
-        type: 'Object',
-        properties: {
-          data: { type: 'Object' },
-          filledCells: { type: 'Array' },
-          filledHours: { type: 'Object' },
-          studyHours: { type: 'Number' },
-          weeklyHoursGoal: { type: 'Number' },
-          weeklyProgressPercentage: { type: 'Number' },
-        },
-      },
+      action: `
+this.setWeeklyHoursGoal(params.goal);
+`,
     },
   ],
 };

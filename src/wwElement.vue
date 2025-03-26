@@ -198,76 +198,12 @@
         <span class="status-hours" :style="statusHoursStyle">{{ count }}h</span>
       </div>
     </div>
-    
-    <!-- Botão de teste (invisível em produção) -->
-    <button 
-      v-if="false" 
-      @click="emitTestEvent()"
-      style="display: none;">
-      Test Event
-    </button>
   </div>
 </template>
 
 <script>
 export default {
-  // SOLUÇÃO PARA EVENTOS DO WEWEB - Registro nativo de eventos
-  /* wwEditor:start */
-  // Use apenas um formato dos três abaixo (descomentar o que funcionar melhor)
-  
-  // Formato 1: Usando wewebEvents (formato mais recente)
-  wewebEvents: {
-    "scheduleChanged": {
-      label: {
-        en: "On Schedule Changed",
-        pt: "Ao Alterar a Agenda" 
-      },
-      description: {
-        en: "Triggered when the schedule is modified",
-        pt: "Acionado quando a agenda é modificada"
-      },
-      event: {
-        filledCells: { type: "Array" },
-        studyHours: { type: "Number" },
-        weeklyHoursGoal: { type: "Number" },
-        weeklyProgressPercentage: { type: "Number" }
-      }
-    },
-    "testEvent": {
-      label: {
-        en: "Test Event",
-        pt: "Evento de Teste"
-      },
-      event: {
-        message: { type: "String" }
-      }
-    }
-  },
-  
-  // Formato 2: Usando events (formato clássico)
-  /*
-  events: {
-    scheduleChanged: {
-      label: {
-        en: 'When Schedule Changes',
-        pt: 'Quando a Agenda Muda'
-      },
-      event: {
-        filledCells: { type: 'Array' },
-        studyHours: { type: 'Number' }
-      }
-    }
-  },
-  */
-  
-  // Formato 3: Usando wwEvents (formato alternativo)
-  /*
-  wwEvents: ['scheduleChanged'],
-  */
-  /* wwEditor:end */
-  
   props: {
-    // Propriedades padrão do WeWeb
     content: { 
       type: Object, 
       required: true 
@@ -278,11 +214,11 @@ export default {
     },
     
     /* wwEditor:start */
-    // Propriedades disponíveis apenas no modo de edição do WeWeb
     wwEditorState: { type: Object, required: false },
     /* wwEditor:end */
   },
-  emits: ['update:content', 'scheduleChanged', 'testEvent'], // Lista explícita de eventos emitidos
+  // Lista explícita de eventos emitidos
+  emits: ['update:content', 'scheduleChanged', 'trigger-event'],
 
   data() {
     return {
@@ -374,7 +310,7 @@ export default {
       return Math.min(percentage, 100); // Cap at 100%
     },
     
-    // Versão para uso interno do componente
+    // Versão para uso interno do componente - usa o método para manter consistência
     filledCells() {
       return this.getFilledCellsArray();
     },
@@ -799,7 +735,7 @@ export default {
       this.$refs.daySelector.addEventListener('touchend', this.handleTouchEnd);
     }
     
-    // SOLUÇÃO PARA EVENTOS - Inicialização WeWeb
+    // INICIALIZAÇÃO WEWEB
     /* wwEditor:start */
     // Registrar o componente e seus eventos no WeWeb
     if (window.wwLib && window.wwLib.wwUtils) {
@@ -809,7 +745,7 @@ export default {
           componentId: this.uid || 'weekly-schedule',
           componentType: 'element',
           hasEvents: true,
-          eventNames: ['scheduleChanged', 'testEvent']
+          eventNames: ['scheduleChanged']
         });
       } catch (e) {
         console.error("[WeeklySchedule] Erro ao registrar componente:", e);
@@ -817,11 +753,10 @@ export default {
     }
     /* wwEditor:end */
     
-    // Emissão inicial para "registrar" o evento
+    // Emissão inicial para "registrar" os eventos
     this.$nextTick(() => {
-      // Emite eventos em diferentes formatos para garantir que um deles funcione
+      // Emite eventos para garantir que o WeWeb os reconheça
       this.emitChange();
-      this.emitTestEvent();
     });
   },
   
@@ -842,64 +777,101 @@ export default {
   },
   
   methods: {
-    // SOLUÇÃO PARA EVENTOS - Múltiplos formatos de emissão para maior compatibilidade
-    
-    // Método de teste - emite um evento simples para testes
-    emitTestEvent() {
-      const testMessage = { message: "Teste de evento com sucesso!" };
-      
-      console.log("[WeeklySchedule] Emitindo evento de teste");
-      
-      // Formato 1: Emissão direta (mais simples)
-      this.$emit('testEvent', testMessage);
-      
-      // Formato 2: Formato WeWeb clássico
-      this.$emit('trigger-event', {
-        name: 'testEvent',
-        event: testMessage
-      });
+    // Data utilities
+    formatDateToISOString(date) {
+      return date.toISOString().split('T')[0];
     },
     
-    // Prepara os dados do evento para uso consistente
+    getDatePlusDays(date, days) {
+      const result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    },
+    
+    // CORREÇÃO CRÍTICA #1: Método para gerar array de células preenchidas
+    // Esse método agora retorna um array simples garantido
+    getFilledCellsArray() {
+      // Iniciando com um array vazio
+      const cells = [];
+      
+      // Percorre todos os dias preenchidos
+      Object.entries(this.scheduleData).forEach(([day, hours]) => {
+        if (hours && Object.keys(hours).length > 0) {
+          // Percorre todas as horas preenchidas deste dia
+          Object.entries(hours).forEach(([hour, type]) => {
+            if (type) {
+              const dayObj = this.days.find(d => d.value === day) || { label: day };
+              const hourInt = parseInt(hour);
+              
+              // Adiciona ao array cada célula preenchida
+              cells.push({
+                day,
+                dayLabel: dayObj.label,
+                hour: hourInt,
+                hourLabel: `${String(hourInt).padStart(2, '0')}:00`,
+                type,
+                typeLabel: this.getCellTypeLabel(type)
+              });
+            }
+          });
+        }
+      });
+      
+      // Verificação de depuração
+      console.log("[WeeklySchedule] Array de células gerado:", cells);
+      
+      // Retorna o array, garantindo que é um array mesmo que vazio
+      return cells || [];
+    },
+    
+    // CORREÇÃO CRÍTICA #2: Prepara dados do evento em formato compatível com WeWeb
     getEventData() {
+      // Gera o array de células garantido como array antes de usá-lo
+      const filledCells = this.getFilledCellsArray();
+      
       return {
-        // Dados estruturados da agenda (formato objeto)
-        data: JSON.parse(JSON.stringify(this.scheduleData)),
+        // Garantindo que filledCells é sempre um array e não um objeto
+        filledCells: Array.isArray(filledCells) ? filledCells : [],
         
-        // Array com todas as células preenchidas
-        filledCells: this.getFilledCellsArray(),
-        
-        // Contagem de horas por tipo
-        filledHours: this.filledHours,
-        
-        // Valores de progresso
+        // Mantendo os outros dados como estavam
         studyHours: this.studyHours,
         weeklyHoursGoal: this.weeklyHoursGoal,
         weeklyProgressPercentage: this.weeklyProgressPercentage,
+        
+        // Incluindo dados completos para referência (não para o trigger de evento)
+        data: JSON.parse(JSON.stringify(this.scheduleData))
       };
     },
   
-    // Método para emitir alterações no estilo WeWeb - MÚLTIPLOS FORMATOS
+    // CORREÇÃO CRÍTICA #3: Emissão de eventos compatível com WeWeb
     emitChange() {
-      // Prepara os dados usando o método consistente
+      // Prepara os dados usando o método atualizado
       const eventData = this.getEventData();
       
-      console.log("[WeeklySchedule] Emitindo evento de alteração na agenda");
+      // Logs para facilitar depuração
+      console.log("[WeeklySchedule] Emitindo evento scheduleChanged");
+      console.log("[WeeklySchedule] filledCells é array?", Array.isArray(eventData.filledCells));
+      console.log("[WeeklySchedule] Tamanho do array:", eventData.filledCells.length);
       
-      // FORMATO 1: Emissão direta do evento - formato padrão Vue
+      // EMISSÃO PRINCIPAL: Direta com o nome esperado pelo WeWeb
       this.$emit('scheduleChanged', eventData);
       
-      // FORMATO 2: Formato WeWeb com trigger-event
+      // FORMATO ALTERNATIVO #1: Via trigger-event
       this.$emit('trigger-event', {
         name: 'scheduleChanged',
         event: eventData
       });
       
-      // FORMATO 3: Teste com prefixo on (alternativa)
-      this.$emit('onScheduleChanged', eventData);
+      // FORMATO ALTERNATIVO #2: Formato explícito com array garantido
       this.$emit('trigger-event', {
-        name: 'onScheduleChanged',
-        event: eventData
+        name: 'scheduleChanged',
+        event: {
+          // Garante explicitamente que é um array usando [...array]
+          filledCells: [...eventData.filledCells],
+          studyHours: eventData.studyHours,
+          weeklyHoursGoal: eventData.weeklyHoursGoal,
+          weeklyProgressPercentage: eventData.weeklyProgressPercentage
+        }
       });
       
       /* wwEditor:start */
@@ -913,36 +885,6 @@ export default {
       /* wwEditor:end */
     },
     
-    // Método dedicado para garantir o formato correto do array de células
-    getFilledCellsArray() {
-      const cells = [];
-      
-      // Percorre todos os dias preenchidos
-      Object.entries(this.scheduleData).forEach(([day, hours]) => {
-        if (hours && Object.keys(hours).length > 0) {
-          // Percorre todas as horas preenchidas deste dia
-          Object.entries(hours).forEach(([hour, type]) => {
-            if (type) {
-              const dayObj = this.days.find(d => d.value === day);
-              const hourInt = parseInt(hour);
-              
-              // Cria um objeto explícito para cada célula preenchida
-              cells.push({
-                day,
-                dayLabel: dayObj ? dayObj.label : day,
-                hour: hourInt,
-                hourLabel: `${String(hourInt).padStart(2, '0')}:00`,
-                type,
-                typeLabel: this.getCellTypeLabel(type)
-              });
-            }
-          });
-        }
-      });
-      
-      return cells;
-    },
-    
     // Utility methods
     initializeEmptySchedule() {
       const data = {};
@@ -952,6 +894,12 @@ export default {
       });
       
       this.scheduleData = data;
+    },
+    
+    // Helper to get day label
+    getDayLabel(dayValue) {
+      const day = this.days.find(d => d.value === dayValue);
+      return day ? day.label : dayValue;
     },
     
     checkMobileView() {
@@ -1176,7 +1124,7 @@ export default {
     
     // External action methods - Métodos para ações externas no WeWeb
     getScheduleData() {
-      // Utiliza o mesmo formato de dados do evento para consistência
+      // CORREÇÃO CRÍTICA #4: Usa o mesmo método getEventData() para consistência
       return this.getEventData();
     },
     
@@ -1248,7 +1196,7 @@ export default {
           console.error("Error importing schedule data:", e);
         }
       }
-    },
+    }
   },
 };
 </script>
